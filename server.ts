@@ -627,7 +627,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
       </div>
 
       <div class="box" id="board">
-        <div class="box-title board-titlebar"><img class="ico" src="/public/icons/notepad-2.png" alt=""> <span id="board-title" data-base="${t.board}">${t.board}${initTags.length ? html` — ${initTags.join(' + ')}` : ''}</span>
+        <div class="box-title board-titlebar"><img class="ico" src="/public/icons/notepad-2.png" alt=""> <span id="board-title" data-base="${t.board}">${t.board}</span>
           <span class="bsearch">
             <input type="text" id="board-search" placeholder="${lang === 'ko' ? '검색' : 'Search'}" autocomplete="off" />
             <label class="srow"><input type="checkbox" id="s-title" checked> ${lang === 'ko' ? '제목' : 'Title'}</label>
@@ -873,7 +873,7 @@ ${html([head(lang, {
 ${classicHomeBody(c, lang, mobile, top)}
 <script type="application/json" id="posts-data">${raw(postsData)}</script>
 <script type="application/json" id="views-data">${raw(JSON.stringify(viewsBySlug))}</script>
-<script src="/public/home-classic.js?v=5" defer></script>
+<script src="/public/home-classic.js?v=6" defer></script>
 <script src="/public/chat.js?v=3" defer></script>
 ${umami}${deviceId}
 </body>

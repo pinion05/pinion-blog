@@ -67,7 +67,7 @@
     var info = document.getElementById('search-info');
     if (info) info.textContent = state.hits ? ((lang === 'en' ? 'results: ' : '결과: ') + list.length) : '';
     var bt = document.getElementById('board-title');
-    if (bt) bt.textContent = base0() + (state.tags.length ? ' — ' + state.tags.join(' + ') : '');
+    if (bt) bt.textContent = base0(); // 타이틀바 모양 고정 — 필터 상태는 TAGS 체크박스가 보여줌
   }
 
   function selectedTags() {
