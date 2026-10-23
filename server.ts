@@ -124,8 +124,16 @@ const sanitizeHtml = (html: string) => {
   .replace(/(<[^>]+)?(href|src)\s*=\s*(["'])\s*javascript:[^"']*\3/gi, '$1 $2="#"');
   return out.replace(/\u0000KEEP(\d+)\u0000/g, (_, i) => KEEP[Number(i)]);
 }
-const md2html = (md: string) => sanitizeHtml(marked.parse(md, { async: false }) as string)
-  .replace(/<h1>/g, '<h2>').replace(/<\/h1>/g, '</h2>');
+// marked는 닫는 ** 뒤에 한글이 바로 오면(CJK 인접) strong 파싱에 실패한다 — 코드 보호 후 직접 변환
+const md2html = (md: string) => {
+  const prot: string[] = [];
+  let pre = md.replace(/```[\s\S]*?```/g, (m0) => { prot.push(m0); return '\u0000CB' + (prot.length - 1) + '\u0000'; });
+  pre = pre.replace(/`[^`\n]*`/g, (m0) => { prot.push(m0); return '\u0000CB' + (prot.length - 1) + '\u0000'; });
+  pre = pre.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  pre = pre.replace(/\u0000CB(\d+)\u0000/g, (_, i) => prot[Number(i)]);
+  return sanitizeHtml(marked.parse(pre, { async: false }) as string)
+    .replace(/<h1>/g, '<h2>').replace(/<\/h1>/g, '</h2>');
+}
 
 // ---------- 댓글 DB ----------
 const db = new DatabaseSync(new URL('./comments.db', import.meta.url).pathname);
