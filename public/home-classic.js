@@ -46,7 +46,7 @@
         var title = lang === 'en' ? (p.titleEn || p.title) : p.title;
         var desc = lang === 'en' ? (p.descEn || p.desc) : p.desc;
         var v = views[p.slug] || 0;
-        var chips = p.tags.map(function (t) { return '<span class="catl">' + esc(t) + '</span>'; }).join('');
+        var chips = '<span class="tagwrap">' + p.tags.map(function (t) { return '<span class="catl">' + esc(t) + '</span>'; }).join('') + '</span>';
         var titleHtml = '<a href="/' + (lang === 'en' ? 'en/post/' : 'post/') + p.slug + '">' + esc(title) + '</a>'
           + (i === 0 && !state.tags.length && !state.hits ? '<span class="new">NEW!</span>' : '');
         if (mobile) {

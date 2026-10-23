@@ -524,3 +524,7 @@ body.home-classic.m .board-titlebar .bsearch input[type="text"] { flex: 1; width
 .home-classic .chat-log { overflow-x: hidden; }
 .home-classic .chat-img { max-width: 100%; width: auto; height: auto; max-height: 150px; }
 .home-classic .chat-msg { max-width: 100%; overflow: hidden; }
+
+/* ── 태그 칩 줄바꿈 (칸 넘침 방지) ── */
+.home-classic table.posts td.c-cat .tagwrap { display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-start; }
+body.home-classic.m .m-meta .tagwrap { display: inline-flex; flex-wrap: wrap; gap: 3px; max-width: 100%; }

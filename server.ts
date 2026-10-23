@@ -259,7 +259,7 @@ function head(lang: Lang, o: { title: string; desc: string; path: string; type?:
 <title>${o.title}</title>
 <meta name="description" content="${o.desc}" />
 <link rel="preload" href="/public/fonts/DungGeunMo.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="/public/home-classic.css?v=37" as="style" />
+<link rel="preload" href="/public/home-classic.css?v=38" as="style" />
 <link rel="canonical" href="${canonical}" />
 <meta name="naver-site-verification" content="b772d55249f687c4f016c2b33cbcde1f1006d12a" />
 <meta name="google-site-verification" content="Eoit82zDj0gOaGtXaJUpWtksxNxgAglIlg0ijwA_-1g" />
@@ -640,7 +640,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
           <table class="posts">
             <tr><th class="c-date">${t.date}</th><th>${t.title}</th><th class="c-cat">${t.cat}</th><th class="c-views">${t.views}</th></tr>
             <tbody id="board-body">${shown.map((p, i) => mobile ? html`<tr class="m-row"><td colspan="5">
-              <div class="m-meta"><span class="date">${p.date}</span>${tagsOf(p).map((tg) => html`<span class="catl">${tg}</span>`)}<span class="views"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewsBySlug.get(p.slug) || 0}</span></div>
+              <div class="m-meta"><span class="date">${p.date}</span><span class="tagwrap">${tagsOf(p).map((tg) => html`<span class="catl">${tg}</span>`)}</span><span class="views"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewsBySlug.get(p.slug) || 0}</span></div>
               <div class="m-titleline"><a href="${postPath(lang, p.slug)}">${p.title[lang]}</a>${i === 0 && !initTags.length ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}</div>
               <div class="desc">${p.description[lang]}</div>
             </td></tr>` : html`<tr>
@@ -649,7 +649,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
                 <a href="${postPath(lang, p.slug)}">${p.title[lang]}</a>${i === 0 && !initTags.length ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}
                 <div class="desc">${p.description[lang]}</div>
               </td>
-              <td class="c-cat">${tagsOf(p).map((tg) => html`<span class="catl">${tg}</span>`)}</td>
+              <td class="c-cat"><span class="tagwrap">${tagsOf(p).map((tg) => html`<span class="catl">${tg}</span>`)}</span></td>
               <td class="views"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewsBySlug.get(p.slug) || 0}</td>
             </tr>`)}</tbody>
           </table>
