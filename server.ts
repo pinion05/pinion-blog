@@ -873,7 +873,7 @@ ${html([head(lang, {
 ${classicHomeBody(c, lang, mobile, top)}
 <script type="application/json" id="posts-data">${raw(postsData)}</script>
 <script type="application/json" id="views-data">${raw(JSON.stringify(viewsBySlug))}</script>
-<script src="/public/home-classic.js?v=4" defer></script>
+<script src="/public/home-classic.js?v=5" defer></script>
 <script src="/public/chat.js?v=3" defer></script>
 ${umami}${deviceId}
 </body>

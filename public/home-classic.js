@@ -1,4 +1,4 @@
-// home-classic.js v3 — TAG 다중체크 + 정렬(날짜/조회수) + 검색(제목/내용 체크박스, 광범위 OR)
+// home-classic.js v5 — TAG 다중체크 + 정렬(날짜/조회수) + 검색(제목/내용 체크박스, 광범위 OR)
 (function () {
   var dataEl = document.getElementById('posts-data');
   var viewsEl = document.getElementById('views-data');
@@ -85,16 +85,15 @@
   }
 
   var boxes = Array.prototype.slice.call(document.querySelectorAll('.tagchk'));
+  var allBox = boxes.filter(function (x) { return x.value === ''; })[0];
+  // ALL = 마스터 토글: 누르면 전체 on/off — 전체 on 후 싫은 태그만 빼는 용법
   boxes.forEach(function (b) {
     b.addEventListener('change', function () {
-      if (b.value === '' && b.checked) {
-        boxes.forEach(function (x) { if (x.value !== '') x.checked = false; });
-      } else if (b.value !== '' && b.checked) {
-        var all = boxes.filter(function (x) { return x.value === ''; })[0];
-        if (all) all.checked = false;
+      if (b === allBox) {
+        boxes.forEach(function (x) { if (x.value !== '') x.checked = allBox.checked; });
+      } else if (allBox) {
+        allBox.checked = boxes.every(function (x) { return x.value === '' || x.checked; });
       }
-      var any = boxes.some(function (x) { return x.value !== '' && x.checked; });
-      if (!any) { var a2 = boxes.filter(function (x) { return x.value === ''; })[0]; if (a2) a2.checked = true; }
       apply(true);
     });
   });
