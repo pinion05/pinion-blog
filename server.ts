@@ -103,10 +103,15 @@ marked.use({
   }
 });
 // 최소 sanitizer: script 태그·인라인 이벤트(on*)·javascript: URL만 제거 — style/table/iframe 등 임베드 표현력은 유지
-const sanitizeHtml = (html: string) => html
-  .replace(/<script[\s\S]*?<\/script>/gi, '')
+const sanitizeHtml = (html: string) => {
+  const KEEP: string[] = [];
+  let out = html.replace(/<script\s+src="\/public\/[^"]*"><\/script>/gi, (m0) => { KEEP.push(m0); return '\u0000KEEP' + (KEEP.length - 1) + '\u0000'; });
+  out = out
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
   .replace(/(<[^>]+)\son\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '$1')
   .replace(/(<[^>]+)?(href|src)\s*=\s*(["'])\s*javascript:[^"']*\3/gi, '$1 $2="#"');
+  return out.replace(/\u0000KEEP(\d+)\u0000/g, (_, i) => KEEP[Number(i)]);
+}
 const md2html = (md: string) => sanitizeHtml(marked.parse(md, { async: false }) as string)
   .replace(/<h1>/g, '<h2>').replace(/<\/h1>/g, '</h2>');
 
@@ -219,7 +224,7 @@ function securityHeaders(c: any, jsonldHtml?: string) {
   const parts = [
     "default-src 'self'",
     scriptSrc,
-    "style-src 'self'",
+    "style-src 'self' 'unsafe-inline'",  // 글 본문 HTML 임베드(<style>, style="") 허용
     "img-src 'self' data: https://media.giphy.com https://*.giphy.com",
     "connect-src 'self'",
     "font-src 'self'",
