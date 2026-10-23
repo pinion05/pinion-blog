@@ -80,7 +80,8 @@ a { color: #0000EE; text-decoration: underline; }
 @keyframes scroll { from { transform: translateX(0); }
 .home-classic to { transform: translateX(-100%); } }
 .home-classic /* ── 2단 테이블 레이아웃 ──────────────────────────── */
-table.layout { width: 100%; margin-top: 10px; table-layout: fixed; border: 0; border-spacing: 0; }
+table.layout { width: 100%; margin-top: 10px; table-layout: fixed; border: 0; border-spacing: 0; direction: rtl; }
+table.layout td { direction: ltr; }
 .home-classic td.side { width: 190px; padding: 0 10px 0 0; vertical-align: top; }
 .home-classic td.main { vertical-align: top; }
 .home-classic /* ── 박스 ─────────────────────────────────────────── */
@@ -241,6 +242,7 @@ body.home-classic { font-family: 'DungGeunMo', Gulim, Dotum, monospace; color: #
 /* 모바일 적응형 (UA 기반 body.m) */
 body.home-classic.m { padding: 10px 6px; }
 body.home-classic.m table.layout, body.home-classic.m table.layout > tbody, body.home-classic.m table.layout > tbody > tr { display: block; width: auto; }
+body.home-classic.m table.layout { direction: ltr; }
 body.home-classic.m table.layout td.side, body.home-classic.m table.layout td.main { display: block; width: auto !important; }
 body.home-classic.m h1.site-title { font-size: 1.5rem; }
 body.home-classic.m .tagline { font-size: .95rem; }

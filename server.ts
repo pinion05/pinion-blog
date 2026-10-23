@@ -344,7 +344,7 @@ function head(lang: Lang, o: { title: string; desc: string; path: string; type?:
 <meta name="description" content="${o.desc}" />
 <meta name="author" content="${AUTHOR_NAME}" />
 <link rel="preload" href="/public/fonts/DungGeunMo.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="/public/home-classic.css?v=41" as="style" />
+<link rel="preload" href="/public/home-classic.css?v=42" as="style" />
 <link rel="canonical" href="${canonical}" />
 <meta name="naver-site-verification" content="b772d55249f687c4f016c2b33cbcde1f1006d12a" />
 <meta name="google-site-verification" content="Eoit82zDj0gOaGtXaJUpWtksxNxgAglIlg0ijwA_-1g" />
@@ -635,7 +635,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
   const topt = top.length ? top[0] : null;
   const toptP = topt ? getPost(topt.slug) : null;
 
-  return html`<link rel="stylesheet" href="/public/home-classic.css?v=41" />
+  return html`<link rel="stylesheet" href="/public/home-classic.css?v=42" />
 <div class="crt-roll"></div>
 <div class="page" id="top">
 
@@ -653,56 +653,6 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
   <div class="rainbow"></div>
   ${liveStrip(lang)}
   <table class="layout"><tr>
-
-    <td class="side">
-      <div class="box">
-        <div class="box-title"><img class="ico" src="/public/icons/search_file_2-4.png" alt=""> ${co(lang, 'menuTitle')}</div>
-        <div class="box-body">
-          <ul class="list">
-            <li><img class="ico" src="/public/icons/homepage-0.png" alt=""> <a href="${homePath(lang)}">${t.home}</a></li>
-            <li><img class="ico" src="/public/icons/message_envelope_open-0.png" alt=""> <a href="${lang === 'ko' ? '/guestbook' : '/en/guestbook'}">${t.guest}</a></li>
-            <li><img class="ico" src="/public/icons/chart1-4.png" alt=""> <a href="${lang === 'ko' ? '/stats' : '/en/stats'}">${t.stats}</a></li>
-            <li><img class="ico" src="/public/icons/html-2.png" alt=""> <a href="https://github.com/pinion05" target="_blank" rel="noopener">GITHUB</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="box box-tags" id="tags-box">
-        <div class="box-title"><img class="ico" src="/public/icons/key_win-2.png" alt=""> ${co(lang, 'categoryTitle')}</div>
-        <div class="box-body">
-          <div class="tagrows">
-            <label class="tagrow"><input type="checkbox" class="tagchk" value="" checked> <span>ALL</span><span class="cnt">${posts.length}</span></label>
-            ${[...tagCount.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([k, n]) => html`<label class="tagrow"><input type="checkbox" class="tagchk" value="${k}"${initTags.includes(k) ? ' checked' : ''}> <span>${k}</span><span class="cnt">${n}</span></label>`)}
-          </div>
-        </div>
-      </div>
-
-      <div class="box">
-        <div class="box-title"><img class="ico" src="/public/icons/half_heart.png" alt=""> ${co(lang, 'profileTitle')}</div>
-        <div class="box-body center">
-          <div class="profile-icon"><img class="ico-big" src="/public/icons/half_heart.png" alt="half heart"></div>
-          <b>${co(lang, 'profileName')}</b>
-          <div class="dim">${co(lang, 'profileDesc')}</div>
-          <hr class="dotted">
-          <ul class="list left">
-            <li><img class="ico" src="/public/icons/html-2.png" alt=""> <a href="https://github.com/pinion05" target="_blank" rel="noopener">GITHUB</a></li>
-            <li><img class="ico" src="/public/icons/html-2.png" alt=""> <a href="https://www.linkedin.com/in/%EB%AA%85%EC%B2%A0-%EB%B0%95-6a886928a/" target="_blank" rel="noopener">LINKEDIN</a></li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="box">
-        <div class="box-title"><img class="ico" src="/public/icons/chart1-4.png" alt=""> ${co(lang, 'counterTitle')}</div>
-        <div class="box-body" style="text-align:center;">
-          <div class="counter">${digits}</div>
-          <div class="counter-label">${co(lang, 'totalViews')} — ${t.nth(counterCache.total || 1)}</div>
-          <div class="counter small today">${String(counterCache.today).padStart(4, '0').split('').map((d2) => html`<span class="digit">${d2}</span>`)}</div>
-          <div class="counter-label">${co(lang, 'today')}</div>
-        </div>
-      </div>
-      ${chatBox(lang)}
-
-    </td>
 
     <td class="main">
 
@@ -760,6 +710,56 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
       </div>
 
 
+
+    </td>
+
+    <td class="side">
+      <div class="box">
+        <div class="box-title"><img class="ico" src="/public/icons/search_file_2-4.png" alt=""> ${co(lang, 'menuTitle')}</div>
+        <div class="box-body">
+          <ul class="list">
+            <li><img class="ico" src="/public/icons/homepage-0.png" alt=""> <a href="${homePath(lang)}">${t.home}</a></li>
+            <li><img class="ico" src="/public/icons/message_envelope_open-0.png" alt=""> <a href="${lang === 'ko' ? '/guestbook' : '/en/guestbook'}">${t.guest}</a></li>
+            <li><img class="ico" src="/public/icons/chart1-4.png" alt=""> <a href="${lang === 'ko' ? '/stats' : '/en/stats'}">${t.stats}</a></li>
+            <li><img class="ico" src="/public/icons/html-2.png" alt=""> <a href="https://github.com/pinion05" target="_blank" rel="noopener">GITHUB</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="box box-tags" id="tags-box">
+        <div class="box-title"><img class="ico" src="/public/icons/key_win-2.png" alt=""> ${co(lang, 'categoryTitle')}</div>
+        <div class="box-body">
+          <div class="tagrows">
+            <label class="tagrow"><input type="checkbox" class="tagchk" value="" checked> <span>ALL</span><span class="cnt">${posts.length}</span></label>
+            ${[...tagCount.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([k, n]) => html`<label class="tagrow"><input type="checkbox" class="tagchk" value="${k}"${initTags.includes(k) ? ' checked' : ''}> <span>${k}</span><span class="cnt">${n}</span></label>`)}
+          </div>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-title"><img class="ico" src="/public/icons/half_heart.png" alt=""> ${co(lang, 'profileTitle')}</div>
+        <div class="box-body center">
+          <div class="profile-icon"><img class="ico-big" src="/public/icons/half_heart.png" alt="half heart"></div>
+          <b>${co(lang, 'profileName')}</b>
+          <div class="dim">${co(lang, 'profileDesc')}</div>
+          <hr class="dotted">
+          <ul class="list left">
+            <li><img class="ico" src="/public/icons/html-2.png" alt=""> <a href="https://github.com/pinion05" target="_blank" rel="noopener">GITHUB</a></li>
+            <li><img class="ico" src="/public/icons/html-2.png" alt=""> <a href="https://www.linkedin.com/in/%EB%AA%85%EC%B2%A0-%EB%B0%95-6a886928a/" target="_blank" rel="noopener">LINKEDIN</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="box">
+        <div class="box-title"><img class="ico" src="/public/icons/chart1-4.png" alt=""> ${co(lang, 'counterTitle')}</div>
+        <div class="box-body" style="text-align:center;">
+          <div class="counter">${digits}</div>
+          <div class="counter-label">${co(lang, 'totalViews')} — ${t.nth(counterCache.total || 1)}</div>
+          <div class="counter small today">${String(counterCache.today).padStart(4, '0').split('').map((d2) => html`<span class="digit">${d2}</span>`)}</div>
+          <div class="counter-label">${co(lang, 'today')}</div>
+        </div>
+      </div>
+      ${chatBox(lang)}
 
     </td>
   </tr></table>
@@ -848,7 +848,7 @@ function classicSide(lang: Lang) {
 function classicShell(lang: Lang, mainContent: any, headExtra: any) {
   const desc = lang === 'ko' ? SITE_DESC : SITE_DESC_EN;
   const other = lang === 'ko' ? 'en' : 'ko';
-  return html`<link rel="stylesheet" href="/public/home-classic.css?v=41" />
+  return html`<link rel="stylesheet" href="/public/home-classic.css?v=42" />
 <div class="page" id="top">
   <div class="banner slim">
     <div class="lang-flags">
@@ -862,8 +862,8 @@ function classicShell(lang: Lang, mainContent: any, headExtra: any) {
   <div class="rainbow"></div>
   ${liveStrip(lang)}
   <table class="layout"><tr>
-    <td class="side">${classicSide(lang)}</td>
     <td class="main"><main id="main">${mainContent}</main></td>
+    <td class="side">${classicSide(lang)}</td>
   </tr></table>
   <div class="rainbow"></div>
   <div class="footer">
@@ -952,6 +952,7 @@ ${html([head(lang, {
     desc,
     path: homePath(lang),
     type: 'website',
+    jsonldHtml: `<script type="application/ld+json">${JSON.stringify([{ '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: `${SITE_URL}${homePath(lang)}`, description: desc, inLanguage: lang }, { '@context': 'https://schema.org', '@type': 'Person', name: AUTHOR_NAME, url: SITE_URL }])}</script>`,
   })] as any)}
 </head>
 <body class="home-classic${mobile ? ' m' : ''}">
@@ -1002,6 +1003,13 @@ async function renderPost(c: any, lang: Lang, slug: string) {
   if (prov) {
     jsonldPost.contributor = { '@type': 'SoftwareApplication', name: 'Hermes Agent (LLM draft + subagent cross-check)' };
     jsonldPost.editor = { '@type': 'Person', name: AUTHOR_NAME, url: SITE_URL };
+  }
+  // 원천-번역 관계 선언 — KO=원본(workTranslation), EN=파생(translationOfWork)으로 같은 저작물임을 기계에게 전달
+  const altLang = ALT[lang];
+  if (p.body[altLang] && p.body[altLang].trim()) {
+    const altUrl = `${SITE_URL}${postPath(altLang, slug)}`;
+    if (lang === 'ko') jsonldPost.workTranslation = { '@type': 'BlogPosting', url: altUrl, inLanguage: 'en', headline: p.title.en || p.title.ko };
+    else jsonldPost.translationOfWork = { '@type': 'BlogPosting', url: `${SITE_URL}${postPath('ko', slug)}`, inLanguage: 'ko', headline: p.title.ko };
   }
   const jsonld = [jsonldPost,
     { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
