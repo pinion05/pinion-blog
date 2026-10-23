@@ -38,27 +38,31 @@ async function translateToEn(text: string): Promise<string> {
       blocks.push(m0);
       return `\n\n${MARK}${blocks.length}%%\n\n`;
     });
-    const r = await fetch('http://127.0.0.1:3001/v1/chat/completions', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${FREEAPI_KEY}`, 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(300_000), // smartest 라우팅은 프론티어 모델을 고를 수 있어 여유 있게
-      body: JSON.stringify({
-        // 실측: smartest 라우팅 pick(dots-3-note-preview:free)은 placeholder 보존 실패 → 무결성 검증에서 KO fallback.
-        // 번역은 검증된 모델 고정 (전역 라우팅 전략과 무관하게 안정 동작)
-        model: 'gemini-3.5-flash',
-        messages: [
-          { role: 'system', content: 'Translate Korean to natural English. Keep markdown formatting exactly (## headings, - lists, [links](url), ![alt](url), code fences). Lines like %%BLOGHTMLBLOCK1%% are placeholders — keep them unchanged, never translate or remove them. Output only the translation, nothing else.' },
-          { role: 'user', content: md },
-        ],
-      }),
-    });
-    if (!r.ok) return '';
-    const j: any = await r.json();
-    let out: string = j.choices?.[0]?.message?.content?.trim() || '';
-    const thinkEnd = out.lastIndexOf('</think>');
-    if (thinkEnd !== -1) out = out.slice(thinkEnd + 8).trim();
-    out = out.replace(new RegExp(`${MARK}(\\d+)%%`, 'g'), (_, i) => blocks[Number(i) - 1] ?? '');
-    if (out.includes(MARK)) return '';
+    let out: string = '';
+    for (const model of ['gemini-3.5-flash', 'auto']) { // 1차 검증 모델 고정, 429(레이트리밋)·무결성 실패 시 라우터 auto 차선
+      const r = await fetch('http://127.0.0.1:3001/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${FREEAPI_KEY}`, 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(300_000),
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: 'Translate Korean to natural English. Keep markdown formatting exactly (## headings, - lists, [links](url), ![alt](url), code fences). Lines like %%BLOGHTMLBLOCK1%% are placeholders — keep them unchanged, never translate or remove them. Output only the translation, nothing else.' },
+            { role: 'user', content: md },
+          ],
+        }),
+      });
+      if (!r.ok) continue;
+      const j: any = await r.json();
+      let cand: string = j.choices?.[0]?.message?.content?.trim() || '';
+      const thinkEnd = cand.lastIndexOf('</think>');
+      if (thinkEnd !== -1) cand = cand.slice(thinkEnd + 8).trim();
+      cand = cand.replace(new RegExp(`${MARK}(\\d+)%%`, 'g'), (_, i) => blocks[Number(i) - 1] ?? '');
+      if (cand.includes(MARK)) continue; // placeholder 유실 — 다음 모델로 재시도
+      out = cand;
+      break;
+    }
+    if (!out) return '';
     // div 블록 안의 한글 텍스트 노드만 2차 번역 (HTML 구조·태그는 그대로 유지)
     const hangul = (s: string) => /[\uAC00-\uD7A3]/.test(s);
     for (const b0 of blocks) {
@@ -119,6 +123,26 @@ type Post = {
   provenance?: Record<Lang, string>; // AI 생성 경로 표기 — 기계 판독 가능한 신뢰 신호
 };
 const posts: Post[] = [];
+
+// 가독성 게이트 — 다닥다닥 문단 반려. 서술 문단(구조화 블록 제외)이 280자 초과면 저장 거부.
+const RG_PARA = new RegExp('\n\s*\n');
+const RG_BLOCK = /^(```|#{1,6}\s|>|\||-\s|\d+\.\s|<\w)/;
+const RG_BOLD = /\*\*/g;
+const RG_LINK = /\[([^\]]*)\]\([^)]*\)/g;
+const RG_WS = /\s/g;
+function readabilityGate(body: string): string[] {
+  const bad: string[] = [];
+  for (const raw of body.split(RG_PARA)) {
+    const t = raw.trim();
+    if (!t) continue;
+    if (RG_BLOCK.test(t)) continue; // 코드/제목/인용/표/리스트/HTML 제외
+    const text = t.replace(RG_BOLD, '').replace(RG_LINK, '$1');
+    const chars = text.replace(RG_WS, '').length;
+    if (chars > 280) bad.push(`${chars}자 문단 (기준 280자): ${t.slice(0, 70)}…`);
+  }
+  return bad;
+}
+
 // 방문자 텍스트·게시글 공용 정규화 — Em dash(U+2014)는 픽셀 폰트에 글리프가 없어 하이픈으로 대치
 const noEmDash = (s2: string) => typeof s2 === 'string' ? s2.replace(/\u2014/g, '-') : s2;
 function reloadPosts() {
@@ -1532,6 +1556,8 @@ admin.post('/admin/new', async (c) => {
   const f = await c.req.parseBody();
   const slug = String(f.slug || '').trim();
   if (!slug || !/^[a-z0-9-]+$/.test(slug) || getPost(slug)) return c.text('invalid slug', 400);
+  const gate1 = readabilityGate(String(f.body_ko || ''));
+  if (gate1.length) return c.html(adminLayout('가독성 검사 반려', html`<div class="card"><h1>반려: 다닥다닥한 문단</h1><p>280자를 초과한 서술 문단이 ${gate1.length}개 있어요. 문단을 쪼개거나 리스트로 구조화한 뒤 다시 저장해주세요.</p><ul>${gate1.map((g: string) => html`<li>${g}</li>`)}</ul><p><a href="/admin/new">← 돌아가기</a></p></div>`), 422);
   const post = { slug, tags: String(f.tags || '').split(',').map((x: string) => x.trim()).filter(Boolean), date: String(f.date || ''), title: { ko: String(f.title_ko || ''), en: '' },
     description: { ko: String(f.desc_ko || ''), en: '' },
     body: { ko: String(f.body_ko || ''), en: '' } };
@@ -1555,6 +1581,8 @@ admin.post('/admin/edit/:slug', async (c) => {
   const p = getPost(slug);
   if (!p) return c.notFound();
   const f = await c.req.parseBody();
+  const gate2 = readabilityGate(String(f.body_ko || ''));
+  if (gate2.length) return c.html(adminLayout('가독성 검사 반려', html`<div class="card"><h1>반려: 다닥다닥한 문단</h1><p>280자를 초과한 서술 문단이 ${gate2.length}개 있어요. 문단을 쪼개거나 리스트로 구조화한 뒤 다시 저장해주세요.</p><ul>${gate2.map((g: string) => html`<li>${g}</li>`)}</ul><p><a href="/admin/edit/${slug}">← 돌아가기</a></p></div>`), 422);
   const oldKo = p.body.ko;
   const oldTitleKo = p.title.ko;
   const oldDescKo = p.description.ko;
