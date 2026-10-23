@@ -119,13 +119,21 @@ type Post = {
   provenance?: Record<Lang, string>; // AI 생성 경로 표기 — 기계 판독 가능한 신뢰 신호
 };
 const posts: Post[] = [];
+// 방문자 텍스트·게시글 공용 정규화 — Em dash(U+2014)는 픽셀 폰트에 글리프가 없어 하이픈으로 대치
+const noEmDash = (s2: string) => typeof s2 === 'string' ? s2.replace(/\u2014/g, '-') : s2;
 function reloadPosts() {
   posts.length = 0;
   const dir = new URL('./content/posts', import.meta.url);
   if (!existsSync(dir)) { try { mkdirSync(dir); } catch {} return; }
   posts.push(...readdirSync(dir)
     .filter(f => f.endsWith('.json'))
-    .map(f => { const p = JSON.parse(readFileSync(new URL(`./content/posts/${f}`, import.meta.url), 'utf8')); p.title.ko = String(p.title.ko || '').replace(/^#{1,6}\s*/, '').trim(); p.title.en = String(p.title.en || '').replace(/^#{1,6}\s*/, '').trim(); return p; })
+    .map(f => { const p = JSON.parse(readFileSync(new URL(`./content/posts/${f}`, import.meta.url), 'utf8'));
+      p.title.ko = noEmDash(String(p.title.ko || '').replace(/^#{1,6}\s*/, '').trim());
+      p.title.en = noEmDash(String(p.title.en || '').replace(/^#{1,6}\s*/, '').trim());
+      p.description.ko = noEmDash(String(p.description.ko || '')); p.description.en = noEmDash(String(p.description.en || ''));
+      p.body.ko = noEmDash(String(p.body.ko || '')); p.body.en = noEmDash(String(p.body.en || ''));
+      if (p.provenance) { p.provenance.ko = noEmDash(String(p.provenance.ko || '')); p.provenance.en = noEmDash(String(p.provenance.en || '')); }
+      return p; })
     .sort((a, b) => b.date.localeCompare(a.date)));
 }
 reloadPosts();
@@ -212,9 +220,6 @@ db.exec(`CREATE TABLE IF NOT EXISTS comments (
 )`);
 db.exec('CREATE INDEX IF NOT EXISTS idx_comments_slug ON comments(slug)');
 try { db.exec('ALTER TABLE comments ADD COLUMN body_en TEXT'); } catch { /* 이미 존재 */ }
-// 방문자 텍스트 저장 전 정규화 — Em dash(U+2014)는 픽셀 폰트에 글리프가 없어 하이픈으로 대치
-const noEmDash = (s2: string) => typeof s2 === 'string' ? s2.replace(/\u2014/g, '-') : s2;
-
 const addComment = db.prepare('INSERT INTO comments (slug, name, ip, body, image) VALUES (?, ?, ?, ?, ?)');
 const listComments = db.prepare('SELECT id, name, ip, body, image, created_at FROM comments WHERE slug = ? ORDER BY id DESC');
 const listAllComments = db.prepare('SELECT id, slug, name, body, image, created_at FROM comments ORDER BY id DESC');
@@ -446,7 +451,7 @@ ${content}
 </main>
 <footer>
   <div class="profile-links"><a href="https://github.com/pinion05" rel="noopener">GITHUB</a><span> · </span><a href="https://www.linkedin.com/in/%EB%AA%85%EC%B2%A0-%EB%B0%95-6a886928a/" rel="noopener">LINKEDIN</a><span> · </span></div>
-  <span>// ${SITE_NAME} — verified posts only. no slop.</span>
+  <span>// ${SITE_NAME} - verified posts only. no slop.</span>
 </footer>
 </body>
 </html>`;
@@ -540,11 +545,11 @@ const COPY_DEFAULTS: Record<Lang, Record<string, string>> = {
     welcome: '안녕하세요, PINION입니다. LLM이 토큰을 어떻게 쓰고 버리는지 파헤치고, AI 슬롭에는 진짜 화를 냅니다. 즐거운 하루 되세요!',
     board: '게시판', no: '번호', date: '날짜', title: '제목', cat: '태그', views: '조회수',
     top: '인기글 TOP', rankSuffix: '위', log: '업데이트 로그', newpost: '신규 글 등록', opened: '블로그 개설',
-    footer1: '© 2026 PINION — {DESC}',
+    footer1: '© 2026 PINION - {DESC}',
     footerMeta: 'LAST UPDATED: {DATE} ◇ BEST VIEWED AT 1280×1024 ◇ NETSCAPE NAVIGATOR 4.0 / INTERNET EXPLORER 5.0',
     footerMetaShort: 'BEST VIEWED AT 1280×1024 ◇ NETSCAPE NAVIGATOR 4.0',
     footer3: '',
-    gbTitle: '방명록 — GUESTBOOK', gbIntro: '흔적을 남겨주세요! 아무 이야기나 환영합니다.',
+    gbTitle: '방명록 - GUESTBOOK', gbIntro: '흔적을 남겨주세요! 아무 이야기나 환영합니다.',
     gbSignTitle: '글 남기기', gbNamePh: '이름 (선택)', gbSign: '남기기', gbMsgPh: '방문 소감을 남겨주세요 (최대 500자)',
     gbCount: '{N}개의 방명록', gbEmpty: '아직 방명록이 비어있어요. 첫 번째가 되어주세요!',
     navTitle: '이동', switchLabel: 'EN 버전 보기 →', backList: '목록으로',
@@ -555,7 +560,7 @@ const COPY_DEFAULTS: Record<Lang, Record<string, string>> = {
     readingNow: ' viewing the same page', liveNow: ' online',
     chatTitle: '라이브 채팅', chatNamePh: '닉네임 (선택)', chatMsgPh: '메시지 입력...', chatSend: '전송',
     readingNow: '명이 나와 같은 페이지를 보는중', liveNow: '명이 블로그에 접속중',
-    statsCounterTitle: '사이트 통계 — WEB COUNTER', statsKeyTitle: '주요 지표 (30일)', statsTrendTitle: '30일 추이',
+    statsCounterTitle: '사이트 통계 - WEB COUNTER', statsKeyTitle: '주요 지표 (30일)', statsTrendTitle: '30일 추이',
     statsChanTitle: '유입 채널 (30일)', statsHeatTitle: '방문 시간대 히트맵 (KST)', statsReportTitle: '글 성적표 (30일)',
     statsGeoTitle: '어디서 오셨나요', statsDevTitle: '기기 · OS · 브라우저', statsLogTitle: '실시간 로그 (최근 15)',
     statsCohortTitle: '코호트 리텐션', statsAssocTitle: '같이 읽는 글', statsDepthTitle: '세션 심도 분포',
@@ -578,7 +583,7 @@ const COPY_DEFAULTS: Record<Lang, Record<string, string>> = {
     welcome: 'Hi, this is PINION. We dissect how LLMs use and drop tokens, and get genuinely angry at AI slop. Have a nice day!',
     board: 'BOARD', no: 'NO', date: 'DATE', title: 'TITLE', cat: 'TAGS', views: 'VIEWS',
     top: 'TOP POSTS', rankSuffix: 'st.', log: 'UPDATE LOG', newpost: 'New post', opened: 'Blog opened',
-    footer1: '© 2026 PINION — {DESC}',
+    footer1: '© 2026 PINION - {DESC}',
     footerMeta: 'LAST UPDATED: {DATE} ◇ BEST VIEWED AT 1280×1024 ◇ NETSCAPE NAVIGATOR 4.0 / INTERNET EXPLORER 5.0',
     footerMetaShort: 'BEST VIEWED AT 1280×1024 ◇ NETSCAPE NAVIGATOR 4.0',
     footer3: '',
@@ -591,7 +596,7 @@ const COPY_DEFAULTS: Record<Lang, Record<string, string>> = {
     newBadge: 'NEW!', gifBtnLabel: 'GIF', topLink: '▲ TOP',
     chatTitle: 'LIVE CHAT', chatNamePh: 'nickname (optional)', chatMsgPh: 'type a message...', chatSend: 'send',
     readingNow: ' viewing the same page', liveNow: ' online',
-    statsCounterTitle: 'SITE STATS — WEB COUNTER', statsKeyTitle: 'KEY NUMBERS (30d)', statsTrendTitle: '30-DAY TREND',
+    statsCounterTitle: 'SITE STATS - WEB COUNTER', statsKeyTitle: 'KEY NUMBERS (30d)', statsTrendTitle: '30-DAY TREND',
     statsChanTitle: 'TRAFFIC SOURCES (30d)', statsHeatTitle: 'VISIT HEATMAP (KST)', statsReportTitle: 'POST REPORT (30d)',
     statsGeoTitle: 'WHERE FROM', statsDevTitle: 'DEVICES · OS · BROWSERS', statsLogTitle: 'LIVE LOG (LAST 15)',
     statsCohortTitle: 'COHORT RETENTION', statsAssocTitle: 'READ TOGETHER', statsDepthTitle: 'SESSION DEPTH',
@@ -602,7 +607,7 @@ try {
   const f = JSON.parse(readFileSync(COPY_FILE, 'utf8'));
   COPY = { ko: { ...(f.ko || {}) }, en: { ...(f.en || {}) } };
 } catch { /* 파일 없음 — 기본값만 */ }
-const co = (lang: Lang, key: string): string => COPY[lang][key] ?? COPY_DEFAULTS[lang][key] ?? '';
+const co = (lang: Lang, key: string): string => noEmDash(COPY[lang][key] ?? COPY_DEFAULTS[lang][key] ?? '');
 const fill = (s: string, map: Record<string, string>): string =>
   s.replace(/\{(\w+)\}/g, (_, k2) => map[k2] ?? '');
 const badgeBr = (lang: Lang, k: string) => html([co(lang, k).split('|').join('<br>')] as any);
@@ -647,7 +652,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
       ${langFlags(lang)}
     </div>
     <h1 class="site-title"><span class="star">★</span> ${co(lang, 'siteTitle')} <span class="star">★</span></h1>
-    <div class="tagline">— ${co(lang, 'tagline')} —</div>
+    <div class="tagline">- ${co(lang, 'tagline')} -</div>
     <div class="banner-meta">${fill(co(lang, 'bannerMeta'), { DATE: latest?.date ?? '' })}</div>
   </div>
 
@@ -692,7 +697,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
         <div class="box-title"><img class="ico" src="/public/icons/chart1-4.png" alt=""> ${t.top}</div>
         <div class="box-body">
           <ul class="list pop">
-            ${topRows.length ? topRows.map((r, i) => r.p ? html`<li><span class="${medals[i]}"><img class="ico" src="/public/icons/certificate-0.png" alt=""></span> <b class="${ranks[i]}">${i + 1}${lang === 'ko' ? '위' : 'st.'}.</b> <a href="${postPath(lang, r.p.slug)}">${r.p.title[lang].slice(0, 24)}${r.p.title[lang].length > 24 ? '...' : ''}</a> <span class="dim">(${r.views} views)</span></li>` : '') : html`<li class="dim">—</li>`}
+            ${topRows.length ? topRows.map((r, i) => r.p ? html`<li><span class="${medals[i]}"><img class="ico" src="/public/icons/certificate-0.png" alt=""></span> <b class="${ranks[i]}">${i + 1}${lang === 'ko' ? '위' : 'st.'}.</b> <a href="${postPath(lang, r.p.slug)}">${r.p.title[lang].slice(0, 24)}${r.p.title[lang].length > 24 ? '...' : ''}</a> <span class="dim">(${r.views} views)</span></li>` : '') : html`<li class="dim">-</li>`}
           </ul>
         </div>
       </div>
@@ -701,7 +706,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
         <div class="box-title"><img class="ico" src="/public/icons/notepad_file_gear-2.png" alt=""> ${t.log}</div>
         <div class="box-body">
           <ul class="log">
-            ${posts.map((p, i) => html`<li><span class="d">${p.date}</span> — ${i === 0 ? t.newpost : t.opened} (${tagsOf(p)[0]}): ${p.title[lang]}</li>`)}
+            ${posts.map((p, i) => html`<li><span class="d">${p.date}</span> - ${i === 0 ? t.newpost : t.opened} (${tagsOf(p)[0]}): ${p.title[lang]}</li>`)}
           </ul>
         </div>
       </div>
@@ -747,7 +752,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
         <div class="box-title"><img class="ico" src="/public/icons/chart1-4.png" alt=""> ${co(lang, 'counterTitle')}</div>
         <div class="box-body" style="text-align:center;">
           <div class="counter">${digits}</div>
-          <div class="counter-label">${co(lang, 'totalViews')} — ${t.nth(counterCache.total || 1)}</div>
+          <div class="counter-label">${co(lang, 'totalViews')} - ${t.nth(counterCache.total || 1)}</div>
           <div class="counter small today">${String(counterCache.today).padStart(4, '0').split('').map((d2) => html`<span class="digit">${d2}</span>`)}</div>
           <div class="counter-label">${co(lang, 'today')}</div>
         </div>
@@ -861,7 +866,7 @@ function classicShell(lang: Lang, mainContent: any, headExtra: any) {
       ${langFlags(lang)}
     </div>
     <h1 class="site-title"><span class="star">★</span> ${co(lang, 'siteTitle')} <span class="star">★</span></h1>
-    <div class="tagline">— ${co(lang, 'tagline')} —</div>
+    <div class="tagline">- ${co(lang, 'tagline')} -</div>
   </div>
   <div class="rainbow"></div>
   ${liveStrip(lang)}
@@ -922,8 +927,8 @@ async function renderGuestbook(c: any, lang: Lang) {
         </div>
       </div>`;
   const canonical = SITE_URL + (lang === 'ko' ? '/guestbook' : '/en/guestbook');
-  const title = ko ? `방명록 — ${SITE_NAME}` : `Guestbook — ${SITE_NAME}`;
-  const desc2 = ko ? 'PINION 방명록 — 방문 흔적을 남겨주세요.' : 'PINION guestbook — leave a trace.';
+  const title = ko ? `방명록 - ${SITE_NAME}` : `Guestbook - ${SITE_NAME}`;
+  const desc2 = ko ? 'PINION 방명록 - 방문 흔적을 남겨주세요.' : 'PINION guestbook - leave a trace.';
   const body = html`<!DOCTYPE html>
 <html lang="${lang}">
 <head>
@@ -949,7 +954,7 @@ async function renderHome(c: any, lang: Lang) {
 <html lang="${lang}">
 <head>
 ${html([head(lang, {
-    title: lang === 'ko' ? `${SITE_NAME} — ${SITE_DESC}` : `${SITE_NAME} — ${SITE_DESC_EN}`,
+    title: lang === 'ko' ? `${SITE_NAME} - ${SITE_DESC}` : `${SITE_NAME} - ${SITE_DESC_EN}`,
     desc,
     path: homePath(lang),
     type: 'website',
@@ -1034,7 +1039,7 @@ async function renderPost(c: any, lang: Lang, slug: string) {
   const switchLabel = co(lang, 'switchLabel');
   const switchToUrl = postPath(ALT[lang], slug);
   const headOpts = {
-     title: `${p.title[lang]} — ${SITE_NAME}`,
+     title: `${p.title[lang]} - ${SITE_NAME}`,
     desc: p.description[lang], path: postPath(lang, slug), type: 'article',
     jsonldHtml, thumb,
     alternates: { ko: postPath('ko', slug), en: postPath('en', slug) },};
@@ -1199,11 +1204,11 @@ async function renderStats(c: any, lang: Lang) {
   }
   const inner = html`${boxes}${st ? '' : html`<div class="box"><div class="box-body"><p class="hint">${ko ? '통계 DB에 일시적으로 연결할 수 없어요.' : 'Stats DB temporarily unavailable.'}</p></div></div>`}`;
   const canonical = SITE_URL + (ko ? '/stats' : '/en/stats');
-  const title = ko ? `통계 — ${SITE_NAME}` : `Stats — ${SITE_NAME}`;
+  const title = ko ? `통계 - ${SITE_NAME}` : `Stats - ${SITE_NAME}`;
   const body = html`<!DOCTYPE html>
 <html lang="${lang}">
 <head>
-${html([head(lang, { title, desc: ko ? 'PINION 방문 통계 — 실시간 카운터와 30일 리포트.' : 'PINION visitor stats — live counter and 30-day report.', path: ko ? '/stats' : '/en/stats', type: 'website', alternates: { ko: '/stats', en: '/en/stats' } })] as any)}
+${html([head(lang, { title, desc: ko ? 'PINION 방문 통계 - 실시간 카운터와 30일 리포트.' : 'PINION visitor stats - live counter and 30-day report.', path: ko ? '/stats' : '/en/stats', type: 'website', alternates: { ko: '/stats', en: '/en/stats' } })] as any)}
 </head>
 <body class="home-classic${isMobile(c) ? ' m' : ''}">
 ${classicShell(lang, inner, '')}
@@ -1283,7 +1288,7 @@ app.get('/llms.txt', (c) => {
   const lines = [
     `# ${SITE_NAME}`,
     '',
-    `> ${SITE_DESC} — ${AUTHOR_NAME}의 90s 감성 기술 블로그. 한국어가 기본이며 주요 글은 영문 번역이 제공됩니다.`,
+    `> ${SITE_DESC} - ${AUTHOR_NAME}의 90s 감성 기술 블로그. 한국어가 기본이며 주요 글은 영문 번역이 제공됩니다.`,
     '',
     'AI 에이전트 활용 가이드: 모든 포스트는 SSR HTML로 본문이 초기 응답에 포함되고, `<main id="main">`/`<article>` 시맨틱 구조와 h2/h3 앵커 id, JSON-LD BlogPosting 메타데이터(datePublished/dateModified/author)를 제공합니다. 한국어·영어 버전은 hreflang과 sitemap xhtml:link로 상호 연결되어 있습니다.',
     '',
