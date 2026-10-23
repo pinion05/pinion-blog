@@ -641,9 +641,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
 
   <div class="banner">
     <div class="lang-flags">
-      ${lang === 'ko'
-        ? html`<span class="cur"><img class="flag" src="/public/flags/kr.png" alt="한국어"></span><a href="${homePath(other)}" title="English"><img class="flag" src="/public/flags/us.png" alt="English"></a>`
-        : html`<a href="${homePath(other)}" title="한국어"><img class="flag" src="/public/flags/kr.png" alt="한국어"></a><span class="cur"><img class="flag" src="/public/flags/us.png" alt="English"></span>`}
+      ${langFlags(lang)}
     </div>
     <h1 class="site-title"><span class="star">★</span> ${co(lang, 'siteTitle')} <span class="star">★</span></h1>
     <div class="tagline">— ${co(lang, 'tagline')} —</div>
@@ -652,10 +650,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
 
   <div class="rainbow"></div>
   ${liveStrip(lang)}
-  <table class="layout"><tr>
-
-    <td class="main">
-
+  ${layoutTable(html`
       <div class="box">
         <div class="box-title"><img class="ico" src="/public/icons/msg_information-0.png" alt=""> WELCOME</div>
         <div class="box-body">${t.welcome} <img class="ico" src="/public/icons/msg_warning-0.png" alt=""></div>
@@ -710,11 +705,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
       </div>
 
 
-
-    </td>
-
-    <td class="side">
-      <div class="box">
+`, html`      <div class="box">
         <div class="box-title"><img class="ico" src="/public/icons/search_file_2-4.png" alt=""> ${co(lang, 'menuTitle')}</div>
         <div class="box-body">
           <ul class="list">
@@ -760,9 +751,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
         </div>
       </div>
       ${chatBox(lang)}
-
-    </td>
-  </tr></table>
+`)}
 
   <div class="rainbow"></div>
 
@@ -800,6 +789,21 @@ function chatBox(lang: Lang) {
           </form>
         </div>
       </aside>`;
+}
+
+
+// ---------- 공유 레이아웃 조각 (홈 셸·서브 셸이 같이 씀 — 두 벌 유지 금지) ----------
+function langFlags(lang: Lang) {
+  const other = ALT[lang];
+  return lang === 'ko'
+    ? html`<span class="cur"><img class="flag" src="/public/flags/kr.png" alt="한국어"></span><a href="${homePath(other)}" title="English"><img class="flag" src="/public/flags/us.png" alt="English"></a>`
+    : html`<a href="${homePath(other)}" title="한국어"><img class="flag" src="/public/flags/kr.png" alt="한국어"></a><span class="cur"><img class="flag" src="/public/flags/us.png" alt="English"></span>`;
+}
+function layoutTable(mainContent: any, sideContent: any) {
+  return html`<table class="layout"><tr>
+    <td class="main"><main id="main">${mainContent}</main></td>
+    <td class="side">${sideContent}</td>
+  </tr></table>`;
 }
 
 function liveStrip(lang: Lang) {
@@ -852,19 +856,14 @@ function classicShell(lang: Lang, mainContent: any, headExtra: any) {
 <div class="page" id="top">
   <div class="banner slim">
     <div class="lang-flags">
-      ${lang === 'ko'
-        ? html`<span class="cur"><img class="flag" src="/public/flags/kr.png" alt="한국어"></span><a href="${homePath(other)}" title="English"><img class="flag" src="/public/flags/us.png" alt="English"></a>`
-        : html`<a href="${homePath(other)}" title="한국어"><img class="flag" src="/public/flags/kr.png" alt="한국어"></a><span class="cur"><img class="flag" src="/public/flags/us.png" alt="English"></span>`}
+      ${langFlags(lang)}
     </div>
     <h1 class="site-title"><span class="star">★</span> ${co(lang, 'siteTitle')} <span class="star">★</span></h1>
     <div class="tagline">— ${co(lang, 'tagline')} —</div>
   </div>
   <div class="rainbow"></div>
   ${liveStrip(lang)}
-  <table class="layout"><tr>
-    <td class="main"><main id="main">${mainContent}</main></td>
-    <td class="side">${classicSide(lang)}</td>
-  </tr></table>
+  ${layoutTable(mainContent, classicSide(lang))}
   <div class="rainbow"></div>
   <div class="footer">
     <div>${fill(co(lang, 'footer1'), { DESC: desc })}</div>
@@ -960,7 +959,7 @@ ${classicHomeBody(c, lang, mobile, top)}
 <script type="application/json" id="posts-data">${raw(postsData)}</script>
 <script type="application/json" id="views-data">${raw(JSON.stringify(viewsBySlug))}</script>
 <script src="/public/home-classic.js?v=6" defer></script>
-<script src="/public/chat.js?v=3" defer></script>
+<script src="/public/chat.js?v=7" defer></script>
 ${umami}${deviceId}
 </body>
 </html>`;
