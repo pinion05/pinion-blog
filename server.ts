@@ -77,6 +77,18 @@ function reloadPosts() {
 }
 reloadPosts();
 const getPost = (slug: string) => posts.find(p => p.slug === slug);
+let postViewsCache = { at: 0, map: new Map<string, number>() };
+async function getPostViews(): Promise<Map<string, number>> {
+  if (Date.now() - postViewsCache.at < 60_000) return postViewsCache.map;
+  try {
+    const pool = getPool();
+    const r = await pool.query(`SELECT replace(url_path,'/en/post/','/post/') AS path, count(*) AS c FROM website_event WHERE website_id=$1 AND url_path LIKE '/post/%' GROUP BY 1`, [UMAMI_ID]);
+    const m = new Map<string, number>();
+    for (const row of r.rows as any[]) m.set(String(row.path).replace('/post/', ''), Number(row.c));
+    postViewsCache = { at: Date.now(), map: m };
+  } catch {}
+  return postViewsCache.map;
+}
 const stripMd = (md: string) => String(md || '').replace(/```[\s\S]*?```/g, ' ').replace(/[#*_>`~\[\]()!-]/g, ' ').replace(/\s+/g, ' ');
 
 const postPath = (lang: Lang, slug: string) => (lang === 'en' ? `/en/post/${slug}` : `/post/${slug}`);
@@ -259,7 +271,7 @@ function head(lang: Lang, o: { title: string; desc: string; path: string; type?:
 <title>${o.title}</title>
 <meta name="description" content="${o.desc}" />
 <link rel="preload" href="/public/fonts/DungGeunMo.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="/public/home-classic.css?v=38" as="style" />
+<link rel="preload" href="/public/home-classic.css?v=39" as="style" />
 <link rel="canonical" href="${canonical}" />
 <meta name="naver-site-verification" content="b772d55249f687c4f016c2b33cbcde1f1006d12a" />
 <meta name="google-site-verification" content="Eoit82zDj0gOaGtXaJUpWtksxNxgAglIlg0ijwA_-1g" />
@@ -892,8 +904,14 @@ app.get('/en', (c) => renderHome(c, 'en'));
 
 // 글 페이지 (ko / en)
 async function renderPost(c: any, lang: Lang, slug: string) {
+  const viewsBySlug = await getPostViews().catch(() => new Map<string, number>());
+  const viewCount = viewsBySlug.get(slug) || 0;
+
   await homeCounter();
   const p = getPost(slug);
+  const mins = Math.max(1, lang === 'en'
+    ? Math.round(stripMd(p?.body?.[lang] || p?.body?.ko || '').split(/\s+/).filter(Boolean).length / 200)
+    : Math.round(stripMd(p?.body?.[lang] || p?.body?.ko || '').replace(/\s/g, '').length / 400));
   if (!p) return c.notFound();
   if (lang === 'en' && !p.body.en.trim()) return c.redirect(postPath('ko', slug), 302);
   const url = `${SITE_URL}${postPath(lang, slug)}`;
@@ -961,7 +979,7 @@ async function renderPost(c: any, lang: Lang, slug: string) {
   const ko = lang === 'ko';
   const inner = html`
       <div class="box">
-        <div class="box-title"><img class="ico" src="/public/icons/notepad-2.png" alt=""> ${p.date} · ${tagsOf(p).join(' · ')} ${idx === 0 ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}</div>
+        <div class="box-title post-titlebar"><img class="ico" src="/public/icons/notepad-2.png" alt=""> <span class="pt-left">${p.date} · ${tagsOf(p).join(' · ')} ${idx === 0 ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}</span><span class="post-meta-r"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewCount} · ${lang === 'ko' ? `약 ${mins}분 분량` : `${mins} min read`}</span></div>
         <div class="box-body post-body">
           <h1 class="post-h1">${p.title[lang]}</h1>
           ${html([md2html(p.body[lang])] as any)}
