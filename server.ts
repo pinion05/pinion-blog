@@ -655,7 +655,6 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
   <table class="layout"><tr>
 
     <td class="side">
-      ${chatBox(lang)}
       <div class="box">
         <div class="box-title"><img class="ico" src="/public/icons/search_file_2-4.png" alt=""> ${co(lang, 'menuTitle')}</div>
         <div class="box-body">
@@ -701,6 +700,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
           <div class="counter-label">${co(lang, 'today')}</div>
         </div>
       </div>
+      ${chatBox(lang)}
 
     </td>
 
@@ -778,7 +778,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
 
 function chatBox(lang: Lang) {
   return html`
-      <div class="box box-chat" id="chat" role="complementary" aria-label="live chat" data-boilerplate="chat">
+      <aside class="box box-chat" id="chat" role="complementary" aria-label="live chat" data-boilerplate="chat">
         <div class="box-title"><img class="ico" src="/public/icons/message_envelope_open-0.png" alt=""> ${co(lang, 'chatTitle')}</div>
         <div class="box-body">
           <div id="chat-log" class="chat-log" aria-live="polite"></div>
@@ -799,7 +799,7 @@ function chatBox(lang: Lang) {
             <input type="hidden" name="giphy_id" id="c-giphy-id" />
           </form>
         </div>
-      </div>`;
+      </aside>`;
 }
 
 function liveStrip(lang: Lang) {
@@ -814,7 +814,6 @@ function classicSide(lang: Lang) {
   for (const p of posts) for (const k of tagsOf(p)) tagCount2.set(k, (tagCount2.get(k) || 0) + 1);
   const cats = [...tagCount2.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   return html`
-      ${chatBox(lang)}
       <div class="box">
         <div class="box-title"><img class="ico" src="/public/icons/search_file_2-4.png" alt=""> ${co(lang, 'menuTitle')}</div>
         <div class="box-body">
@@ -842,7 +841,8 @@ function classicSide(lang: Lang) {
           <div class="counter small today">${String(dv.today).padStart(4, '0').split('').map((d2) => html`<span class="digit">${d2}</span>`)}</div>
           <div class="counter-label">${co(lang, 'today')}</div>
         </div>
-      </div>`;
+      </div>
+      ${chatBox(lang)}`;
 }
 
 function classicShell(lang: Lang, mainContent: any, headExtra: any) {
@@ -926,7 +926,7 @@ async function renderGuestbook(c: any, lang: Lang) {
   const body = html`<!DOCTYPE html>
 <html lang="${lang}">
 <head>
-${html([head(lang, { title, desc: desc2, canonical, type: 'website', alternates: { ko: '/guestbook', en: '/en/guestbook' } })] as any)}
+${html([head(lang, { title, desc: desc2, path: lang === 'ko' ? '/guestbook' : '/en/guestbook', type: 'website', alternates: { ko: '/guestbook', en: '/en/guestbook' } })] as any)}
 </head>
 <body class="home-classic${isMobile(c) ? ' m' : ''}">
 ${classicShell(lang, inner, '')}
@@ -950,7 +950,7 @@ async function renderHome(c: any, lang: Lang) {
 ${html([head(lang, {
     title: lang === 'ko' ? `${SITE_NAME} — ${SITE_DESC}` : `${SITE_NAME} — ${SITE_DESC_EN}`,
     desc,
-    canonical,
+    path: homePath(lang),
     type: 'website',
   })] as any)}
 </head>
@@ -1194,7 +1194,7 @@ async function renderStats(c: any, lang: Lang) {
   const body = html`<!DOCTYPE html>
 <html lang="${lang}">
 <head>
-${html([head(lang, { title, desc: ko ? 'PINION 방문 통계 — 실시간 카운터와 30일 리포트.' : 'PINION visitor stats — live counter and 30-day report.', canonical, type: 'website', alternates: { ko: '/stats', en: '/en/stats' } })] as any)}
+${html([head(lang, { title, desc: ko ? 'PINION 방문 통계 — 실시간 카운터와 30일 리포트.' : 'PINION visitor stats — live counter and 30-day report.', path: ko ? '/stats' : '/en/stats', type: 'website', alternates: { ko: '/stats', en: '/en/stats' } })] as any)}
 </head>
 <body class="home-classic${isMobile(c) ? ' m' : ''}">
 ${classicShell(lang, inner, '')}
@@ -1266,7 +1266,42 @@ app.get('/sitemap.xml', (c) => {
 app.get('/robots.txt', (c) => {
   securityHeaders(c);
   const bots = ['Yeti', 'OAI-SearchBot', 'PerplexityBot', 'ClaudeBot', 'Claude-User', 'Perplexity-User', 'Applebot'];
-  return c.text(`User-agent: *\nAllow: /\nDisallow: /api/\n\n` + bots.map(b => `User-agent: ${b}\nAllow: /`).join('\n\n') + `\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
+  return c.text(`User-agent: *\nAllow: /\nDisallow: /api/\n\n` + bots.map(b => `User-agent: ${b}\nAllow: /`).join('\n\n') + `\n\nSitemap: ${SITE_URL}/sitemap.xml\nLLMs: ${SITE_URL}/llms.txt\n`);
+});
+// llms.txt — 에이전트용 사이트 큐레이션 (요약·검증 방법론·글 목록)
+app.get('/llms.txt', (c) => {
+  securityHeaders(c);
+  const lines = [
+    `# ${SITE_NAME}`,
+    '',
+    `> ${SITE_DESC} — ${AUTHOR_NAME}의 90s 감성 기술 블로그. 한국어가 기본이며 주요 글은 영문 번역이 제공됩니다.`,
+    '',
+    'AI 에이전트 활용 가이드: 모든 포스트는 SSR HTML로 본문이 초기 응답에 포함되고, `<main id="main">`/`<article>` 시맨틱 구조와 h2/h3 앵커 id, JSON-LD BlogPosting 메타데이터(datePublished/dateModified/author)를 제공합니다. 한국어·영어 버전은 hreflang과 sitemap xhtml:link로 상호 연결되어 있습니다.',
+    '',
+    '## 검증 방법론',
+    '',
+    '- 각 글의 AI 생성 경로는 본문 상단 `.prov-note` 박스와 JSON-LD `contributor`(에이전트)·`editor`(사람) 필드로 표시됩니다.',
+    '- 수치·코드 인용은 실행으로 검증한 값을 사용하며, 출처 링크(논문·공식 문서)를 본문에 포함합니다.',
+    '- 댓글·채팅·방명록은 방문자 생성 콘텐츠로 `<main>` 바깥 또는 `role="complementary"`로 분리되어 있습니다.',
+    '',
+    '## 글 목록',
+    '',
+    ...posts.map(p => {
+      const t = p.title.ko;
+      const en = p.title.en ? ` (EN: ${SITE_URL}${postPath('en', p.slug)})` : '';
+      const tg = (p.tags || []).join(', ');
+      return `- [${t}](${SITE_URL}${postPath('ko', p.slug)}): ${p.description.ko} (${p.date}${tg ? '; tags: ' + tg : ''})${en}`;
+    }),
+    '',
+    '## 페이지',
+    '',
+    `- [홈](${SITE_URL}/): 최근 글 목록, 라이브 현황`,
+    `- [통계](${SITE_URL}/stats): 방문 통계 30일 리포트`,
+    `- [방명록](${SITE_URL}/guestbook): 방문자 메시지`,
+    `- RSS: ${SITE_URL}/rss.xml · Sitemap: ${SITE_URL}/sitemap.xml`,
+    '',
+  ];
+  return c.text(lines.join('\n'), 200, { 'Content-Type': 'text/plain; charset=utf-8' });
 });
 app.post('/api/seen', async (c) => {
   if (!sameOrigin(c) || /HeadlessChrome/i.test(c.req.header('user-agent') || '')) return c.body('', 204);
