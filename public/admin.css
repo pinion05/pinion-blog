@@ -1,0 +1,107 @@
+/* 어드민 전용 스타일 (블로그 스타일 위에 덮어씀) */
+body.admin { max-width: 900px; }
+body.admin::after { display: none; }
+
+body.admin .site-nav { border-bottom: 1px solid var(--border); }
+body.admin .tabs a { font-size: .9rem; }
+
+.card {
+  background: #0d130d;
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.card h1 { margin-top: 0; }
+.card p { margin: .8rem 0; }
+.hint { color: var(--dim); font-size: .88rem; }
+
+.post-item {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 1ch;
+  border-bottom: 1px dashed var(--border); padding: .9rem 0;
+}
+.post-item .meta { flex-basis: 100%; margin: 0; }
+.post-item h2 { flex: 1; margin: 0; font-size: 1rem; }
+.post-item h2::before { content: none; }
+.post-item form { margin: 0; }
+
+button, .c-form button { border-radius: 2px; }
+.del {
+  font: inherit; font-size: .82rem; background: none; cursor: pointer;
+  color: #ff6b6b; border: 1px solid #6b2222; padding: .2em 1.2ch;
+}
+.del:hover { background: #ff6b6b; color: var(--bg); }
+
+.card label {
+  display: block; color: var(--accent); font-size: .8rem;
+  margin: 1rem 0 .3rem;
+}
+.card label::before { content: "> "; color: var(--accent-dim); }
+.card input[type="text"], .card input[type="password"], .card textarea {
+  font: inherit; font-size: .95rem; width: 100%;
+  background: var(--bg); color: var(--fg);
+  border: 1px solid var(--border); padding: .55em .8ch;
+}
+.card textarea { line-height: 1.7; resize: vertical; }
+.card textarea:focus, .card input:focus { outline: 1px solid var(--accent-dim); }
+.card button[type="submit"] {
+  font: inherit; font-weight: 700; cursor: pointer;
+  background: var(--accent); color: var(--bg); border: none;
+  padding: .5em 2ch; margin-top: 1.2rem;
+}
+.card button[type="submit"]:hover { filter: brightness(1.15); }
+
+@media (prefers-color-scheme: dark) { /* 단일 다크 테마 고정 */ }
+
+.post-item .cbody { white-space: pre-wrap; margin: .2rem 0 .4rem; word-break: break-word; }
+.post-item .cbody img { max-width: 200px; border-radius: 4px; display: block; margin: 4px 0; }
+
+/* ═══ CRT 모니터 효과 (전역 오버레이) ═══ */
+body.admin { position: relative; }
+body.admin::before {
+  content: ""; position: fixed; inset: 0; z-index: 9998;
+  pointer-events: none;
+  /* 스캔라인 + RGB 어퍼처 그릴 */
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.13) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255,0,0,.03) 0 1px, rgba(0,255,0,.02) 1px 2px, rgba(0,0,255,.03) 2px 3px);
+  mix-blend-mode: multiply;
+}
+body.admin::after {
+  content: ""; position: fixed; inset: 0; z-index: 9999;
+  pointer-events: none;
+  /* 유리 반사 (비네트 제거됨) */
+  border-radius: 18px;
+  background:
+    linear-gradient(115deg, rgba(255,255,255,.05) 0%, transparent 22%);
+  animation: crt-flicker 6s infinite steps(60);
+}
+/* 롤링 밴드 (위→아래 흐르는 밝은 띠) */
+body.admin .crt-roll {
+  content: ""; position: fixed; left: 0; right: 0; height: 120px; z-index: 9997;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, rgba(255,255,255,.045), transparent);
+  animation: crt-roll 9s linear infinite;
+}
+@keyframes crt-roll { 0% { top: -15%; } 100% { top: 110%; } }
+@keyframes crt-flicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .965; }
+  52% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.admin::after, body.admin .crt-roll { animation: none; }
+}
+/* 모바일: 가벼운 버전 (스캔라인만, 롤링 밴드 정지) */
+@media (max-width: 760px) {
+  body.admin::before { background: repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 3px); }
+  body.admin .crt-roll { display: none; }
+}
+
+/* ── 사이트 텍스트 편집 ── */
+table.copy-table { width: 100%; border-collapse: collapse; }
+table.copy-table th, table.copy-table td { border: 1px solid #3a4a5a; padding: 4px 6px; text-align: left; vertical-align: top; }
+table.copy-table th { background: #22303f; color: #cfe0f0; }
+table.copy-table td.copy-label { font-size: 12px; color: #9fb4c8; }
+table.copy-table td.copy-label code { font-size: 11px; color: #6d88a3; }
+table.copy-table input[type=text], table.copy-table textarea { width: 100%; box-sizing: border-box; background: #101820; color: #e8f0f8; border: 1px solid #3a4a5a; padding: 4px 6px; font: inherit; }

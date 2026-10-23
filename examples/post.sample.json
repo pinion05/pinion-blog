@@ -1,0 +1,19 @@
+{
+  "slug": "hello-pinion",
+  "date": "2026-01-01",
+  "tags": [
+    "SAMPLE"
+  ],
+  "title": {
+    "ko": "첫 글 — PINION 시작하기",
+    "en": "Hello PINION"
+  },
+  "description": {
+    "ko": "샘플 글입니다. 이 파일을 복사해 블로그를 시작하세요.",
+    "en": "Sample post."
+  },
+  "body": {
+    "ko": "## 마크다운\n\n- **굵게**, *기울임*, `코드`, [링크](https://example.com)\n- 이미지: ![설명](/public/media/sample.png)\n\n## HTML 임베드\n\n<details><summary>펼쳐보기</summary>접힌 내용</details>\n\n<div style=\"border:2px solid #000080;padding:8px;\">style 입힌 박스</div>\n\n> 인용구도 됩니다.",
+    "en": "## Markdown\n\n- **bold**, `code`, [link](https://example.com)\n\n> Quote."
+  }
+}

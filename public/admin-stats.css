@@ -1,0 +1,38 @@
+/* 어드민 통계 대시보드 */
+.kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; margin: .8rem 0; }
+.kpi { border: 1px solid var(--border); padding: .7rem .9rem; background: #0a0f0a; }
+.kpi .k-num { font-size: 1.5rem; font-weight: 700; color: var(--accent); }
+.kpi .k-lab { color: var(--dim); font-size: .78rem; }
+.kpi.rt .k-num { color: #ffd24d; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+.chart { width: 100%; height: auto; display: block; }
+.sb-bar { fill: #2f6f3f; }
+.sb-line { fill: none; stroke: #ffd24d; stroke-width: 2; }
+.sb-lab, .hm-lab, .hb-lab { fill: var(--dim); font-size: 9px; font-family: inherit; }
+.hb-lab { fill: var(--fg); }
+.hb-bar { fill: var(--accent-dim); }
+.hb-val { fill: var(--dim); font-size: 9px; }
+.hm-cell { fill: var(--accent); }
+.dn-lab { fill: var(--fg); font-size: 8.5px; }
+.dn-val { fill: var(--dim); font-size: 8.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: .4rem 1.2rem; margin: .4rem 0 0; font-size: .8rem; }
+.legend i { display: inline-block; width: .8em; height: .8em; margin-right: .35ch; }
+table.stat { width: 100%; border-collapse: collapse; font-size: .85rem; }
+table.stat th, table.stat td { border-bottom: 1px dashed var(--border); padding: .35rem .4rem; text-align: left; }
+table.stat th { color: var(--accent); font-weight: 400; }
+table.stat td.num, table.stat th.num { text-align: right; }
+.dash-note { color: var(--dim); font-size: .8rem; margin-top: .4rem; }
+@media (max-width: 720px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } .two-col { grid-template-columns: 1fr; } }
+
+.dn { max-width: 200px; }
+.sw-search { background: #4d9fff; }
+.sw-social { background: #c678dd; }
+.sw-direct { background: #8fa88f; }
+.sw-referral { background: #ffd24d; }
+.legend i { border-radius: 2px; }
+h2 { margin: 1.4rem 0 .5rem; font-size: 1.02rem; }
+.sb-line.views { stroke: #2f6f3f; stroke-width: 2; }
+.sb-line.visitors { stroke: #ffd24d; stroke-width: 2; }
+.sb-dot { stroke: none; }
+.sb-dot.views { fill: #2f6f3f; }
+.sb-dot.visitors { fill: #ffd24d; }
