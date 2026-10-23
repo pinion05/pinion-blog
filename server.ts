@@ -212,6 +212,9 @@ db.exec(`CREATE TABLE IF NOT EXISTS comments (
 )`);
 db.exec('CREATE INDEX IF NOT EXISTS idx_comments_slug ON comments(slug)');
 try { db.exec('ALTER TABLE comments ADD COLUMN body_en TEXT'); } catch { /* 이미 존재 */ }
+// 방문자 텍스트 저장 전 정규화 — Em dash(U+2014)는 픽셀 폰트에 글리프가 없어 하이픈으로 대치
+const noEmDash = (s2: string) => typeof s2 === 'string' ? s2.replace(/\u2014/g, '-') : s2;
+
 const addComment = db.prepare('INSERT INTO comments (slug, name, ip, body, image) VALUES (?, ?, ?, ?, ?)');
 const listComments = db.prepare('SELECT id, name, ip, body, image, created_at FROM comments WHERE slug = ? ORDER BY id DESC');
 const listAllComments = db.prepare('SELECT id, slug, name, body, image, created_at FROM comments ORDER BY id DESC');
@@ -500,7 +503,7 @@ async function topPosts() {
 }
 
 const tagsOf = (p: any) => (p.tags && p.tags.length ? p.tags : ['MISC']).map((x: string) => String(x).toUpperCase());
-const postsData = JSON.stringify(posts.map(p => ({ slug: p.slug, date: p.date, tags: tagsOf(p), title: p.title.ko, titleEn: p.title.en, desc: p.description.ko, descEn: p.description.en })));
+const postsDataJson = () => JSON.stringify(posts.map(p => ({ slug: p.slug, date: p.date, tags: tagsOf(p), title: p.title.ko, titleEn: p.title.en, desc: p.description.ko, descEn: p.description.en })));
 const isMobile = (c: any) => /Mobi|Android|iPhone|iPad|Windows Phone/i.test(c.req.header('user-agent') || '');
 
 let counterCache = { at: 0, total: 0, today: 0 };
@@ -668,18 +671,17 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
         </div>
         <div class="box-body pad6">
           <table class="posts">
-            <tr><th class="c-date">${t.date}</th><th>${t.title}</th><th class="c-cat">${t.cat}</th><th class="c-views">${t.views}</th></tr>
-            <tbody id="board-body">${shown.map((p, i) => mobile ? html`<tr class="m-row"><td colspan="5">
-              <div class="m-meta"><span class="date">${p.date}</span><span class="tagwrap">${tagsOf(p).map((tg) => html`<span class="catl">${tg}</span>`)}</span><span class="views"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewsBySlug.get(p.slug) || 0}</span></div>
+            <tr><th>${t.title}</th><th class="c-cat">${t.cat}</th><th class="c-views">${t.views}</th></tr>
+            <tbody id="board-body">${shown.map((p, i) => mobile ? html`<tr class="m-row"><td colspan="3">
+              <div class="m-meta"><span class="tagwrap">${tagsOf(p).map((tg: string) => html`<span class="catl">${tg}</span>`)}</span><span class="views"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewsBySlug.get(p.slug) || 0}</span></div>
               <div class="m-titleline"><a href="${postPath(lang, p.slug)}">${p.title[lang]}</a>${i === 0 && !initTags.length ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}</div>
-              <div class="desc">${p.description[lang]}</div>
+              <div class="desc">${p.description[lang]} <span class="c-date">${p.date}</span></div>
             </td></tr>` : html`<tr>
-              <td class="date">${p.date}</td>
               <td>
                 <a href="${postPath(lang, p.slug)}">${p.title[lang]}</a>${i === 0 && !initTags.length ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}
-                <div class="desc">${p.description[lang]}</div>
+                <div class="desc">${p.description[lang]} <span class="c-date">${p.date}</span></div>
               </td>
-              <td class="c-cat"><span class="tagwrap">${tagsOf(p).map((tg) => html`<span class="catl">${tg}</span>`)}</span></td>
+              <td class="c-cat"><span class="tagwrap">${tagsOf(p).map((tg: string) => html`<span class="catl">${tg}</span>`)}</span></td>
               <td class="views"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewsBySlug.get(p.slug) || 0}</td>
             </tr>`)}</tbody>
           </table>
@@ -956,9 +958,9 @@ ${html([head(lang, {
 </head>
 <body class="home-classic${mobile ? ' m' : ''}">
 ${classicHomeBody(c, lang, mobile, top)}
-<script type="application/json" id="posts-data">${raw(postsData)}</script>
+<script type="application/json" id="posts-data">${raw(postsDataJson())}</script>
 <script type="application/json" id="views-data">${raw(JSON.stringify(viewsBySlug))}</script>
-<script src="/public/home-classic.js?v=6" defer></script>
+<script src="/public/home-classic.js?v=7" defer></script>
 <script src="/public/chat.js?v=7" defer></script>
 ${umami}${deviceId}
 </body>
@@ -1246,7 +1248,7 @@ app.post('/api/comments', async (c) => {
     }
   }
   if ((!body && !imagePath) || rateLimited(ip)) return c.redirect(`${backPath}#comments`, 303);
-  addComment.run(slug, author || maskIp(ip), ip, body, imagePath);
+  addComment.run(slug, noEmDash(author || maskIp(ip)), ip, noEmDash(body), imagePath);
   return c.redirect(`${backPath}#comments`, 303);
 });
 
@@ -1352,7 +1354,7 @@ app.post('/api/chat', async (c) => {
   let b: any = {};
   try { b = await c.req.json(); } catch {}
   let body = stripTags(String(b.body || '')).slice(0, 300).trim();
-  const name = stripTags(String(b.name || '')).slice(0, 30).trim() || (langOf(c) === 'en' ? 'anon' : '익명');
+  const name = noEmDash(stripTags(String(b.name || '')).slice(0, 30).trim()) || (langOf(c) === 'en' ? 'anon' : '익명');
   let imagePath: string | null = null;
   const giphyId = String(b.giphy_id || '').trim();
   if (giphyId && /^[a-zA-Z0-9]{1,64}$/.test(giphyId)) {
@@ -1364,7 +1366,7 @@ app.post('/api/chat', async (c) => {
     if (g) { imagePath = g.url; body = g.clean; }
   }
   if (!body && !imagePath) return c.json({ ok: false }, 400);
-  const payload = body || (imagePath ? '🖼️' : '');
+  const payload = noEmDash(body) || (imagePath ? '🖼️' : '');
   const dup: any = chatDup.get(name, payload, imagePath || '', ip);
   if (dup && Number(dup.n) > 0) return c.json({ ok: true, id: Number(dup.id), dup: true });
   const r = chatAdd.run('__chat', name, ip, payload, imagePath);
@@ -1378,7 +1380,7 @@ app.post('/api/guestbook', async (c) => {
   const ip = c.req.header('x-forwarded-for') || '0.0.0.0';
   if (rateLimited(ip)) return c.redirect('/guestbook?err=rate', 302);
   const body = stripTags(String(form.body || '')).slice(0, 500).trim();
-  const name = stripTags(String(form.author || '')).slice(0, 60).trim() || (langOf(c) === 'en' ? 'Anonymous' : '익명');
+  const name = noEmDash(stripTags(String(form.author || '')).slice(0, 60).trim()) || (langOf(c) === 'en' ? 'Anonymous' : '익명');
   let imagePath: string | null = null;
   const giphyId = String(form.giphy_id || '').trim();
   if (giphyId && /^[a-zA-Z0-9]{1,64}$/.test(giphyId)) {
@@ -1390,7 +1392,7 @@ app.post('/api/guestbook', async (c) => {
     if (g) { imagePath = g.url; body = g.clean; }
   }
   if (!body && !imagePath) return c.redirect('/guestbook', 302);
-  const r = addGuestbook.run('__guestbook', name, ip, body, imagePath);
+  const r = addGuestbook.run('__guestbook', noEmDash(name), ip, noEmDash(body), imagePath);
   const rowId = Number(r.lastInsertRowid);
   backgroundSave(async () => {
     const en = await translateToEn(body);

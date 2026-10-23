@@ -25,7 +25,10 @@
   }
   function visible() {
     var list = posts;
-    if (state.tags.length) list = list.filter(function (p) { return state.tags.some(function (t) { return p.tags.indexOf(t) >= 0; }); });
+    if (state.tags.length) {
+      var want = state.tags.map(function (t) { return t.toLowerCase(); });
+      list = list.filter(function (p) { return p.tags.some(function (t) { return want.indexOf(String(t).toLowerCase()) >= 0; }); });
+    }
     if (state.hits) {
       var set = {};
       state.hits.forEach(function (s) { set[s] = 1; });
@@ -39,8 +42,8 @@
     var total = posts.length;
     if (!list.length) {
       body.innerHTML = lang === 'en'
-        ? '<tr><td colspan="4" style="text-align:center;padding:14px 0;color:#555;">No results.</td></tr>'
-        : '<tr><td colspan="4" style="text-align:center;padding:14px 0;color:#555;">검색 결과가 없습니다.</td></tr>';
+        ? '<tr><td colspan="3" style="text-align:center;padding:14px 0;color:#555;">No results.</td></tr>'
+        : '<tr><td colspan="3" style="text-align:center;padding:14px 0;color:#555;">검색 결과가 없습니다.</td></tr>';
     } else {
       body.innerHTML = list.map(function (p, i) {
         var title = lang === 'en' ? (p.titleEn || p.title) : p.title;
@@ -50,15 +53,14 @@
         var titleHtml = '<a href="/' + (lang === 'en' ? 'en/post/' : 'post/') + p.slug + '">' + esc(title) + '</a>'
           + (i === 0 && !state.tags.length && !state.hits ? '<span class="new">NEW!</span>' : '');
         if (mobile) {
-          return '<tr class="m-row"><td colspan="4">'
-            + '<div class="m-meta"><span class="date">' + p.date + '</span>' + chips + '</div>'
+          return '<tr class="m-row"><td colspan="3">'
+            + '<div class="m-meta">' + chips + '</div>'
             + '<div class="m-titleline">' + titleHtml + '</div>'
-            + '<div class="desc">' + esc(desc) + '</div>'
+            + '<div class="desc">' + esc(desc) + ' <span class="c-date">' + p.date + '</span></div>'
             + '</td></tr>';
         }
         return '<tr>'
-          + '<td class="date">' + p.date + '</td>'
-          + '<td>' + titleHtml + '<div class="desc">' + esc(desc) + '</div></td>'
+          + '<td>' + titleHtml + '<div class="desc">' + esc(desc) + ' <span class="c-date">' + p.date + '</span></div></td>'
           + '<td class="c-cat">' + chips + '</td>'
           + '<td class="views">' + eye + v + '</td>'
           + '</tr>';
@@ -98,9 +100,9 @@
     });
   });
   window.addEventListener('popstate', function () {
-    var q = (new URLSearchParams(location.search).get('tags') || new URLSearchParams(location.search).get('cat') || '').toUpperCase();
+    var q = (new URLSearchParams(location.search).get('tags') || new URLSearchParams(location.search).get('cat') || '');
     state.tags = q ? q.split(',').filter(Boolean) : [];
-    boxes.forEach(function (x) { x.checked = state.tags.length ? (state.tags.indexOf(x.value) >= 0) : x.value === ''; });
+    boxes.forEach(function (x) { x.checked = state.tags.length ? (state.tags.some(function (t) { return t.toLowerCase() === String(x.value).toLowerCase(); })) : x.value === ''; });
     render();
   });
 
@@ -140,10 +142,10 @@
   [tEl, bEl].forEach(function (c) { if (c) c.addEventListener('change', runSearch); });
 
   // 초기: URL ?tags=(레거시 ?cat=) 프리체크
-  var q0 = (new URLSearchParams(location.search).get('tags') || new URLSearchParams(location.search).get('cat') || '').toUpperCase();
+  var q0 = (new URLSearchParams(location.search).get('tags') || new URLSearchParams(location.search).get('cat') || '');
   if (q0) {
     state.tags = q0.split(',').filter(Boolean);
-    boxes.forEach(function (x) { x.checked = state.tags.indexOf(x.value) >= 0; });
+    boxes.forEach(function (x) { x.checked = state.tags.some(function (t) { return t.toLowerCase() === String(x.value).toLowerCase(); }); });
     apply(false);
   }
 })();
