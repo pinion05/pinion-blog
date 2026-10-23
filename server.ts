@@ -116,6 +116,7 @@ type Post = {
   description: Record<Lang, string>;
   body: Record<Lang, string>;
   tags?: string[];
+  provenance?: Record<Lang, string>; // AI 생성 경로 표기 — 기계 판독 가능한 신뢰 신호
 };
 const posts: Post[] = [];
 function reloadPosts() {
@@ -183,7 +184,18 @@ const md2html = (md: string) => {
   pre = pre.replace(/`[^`\n]*`/g, (m0) => { prot.push(m0); return '\u0000CB' + (prot.length - 1) + '\u0000'; });
   pre = pre.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
   pre = pre.replace(/\u0000CB(\d+)\u0000/g, (_, i) => prot[Number(i)]);
-  return sanitizeHtml(marked.parse(pre, { async: false }) as string)
+  let out = marked.parse(pre, { async: false }) as string;
+  // 섹션 앵커 — 에이전트가 h2/h3 기준으로 글을 청킹·인용할 수 있게 고유 id 부여
+  const seen: Record<string, number> = {};
+  out = out.replace(/<h([23])>([\s\S]*?)<\/h\1>/g, (_m, lvl: string, inner: string) => {
+    const txt = inner.replace(/<[^>]+>/g, '').trim();
+    let id = txt.replace(/[^\p{L}\p{N}\- ]/gu, '').trim().replace(/\s+/g, '-').slice(0, 60);
+    if (!id) id = 'sec';
+    seen[id] = (seen[id] || 0) + 1;
+    if (seen[id] > 1) id = `${id}-${seen[id]}`;
+    return `<h${lvl} id="${id}">${inner}</h${lvl}>`;
+  });
+  return sanitizeHtml(out)
     .replace(/<h1>/g, '<h2>').replace(/<\/h1>/g, '</h2>');
 }
 
@@ -330,8 +342,9 @@ function head(lang: Lang, o: { title: string; desc: string; path: string; type?:
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>${o.title}</title>
 <meta name="description" content="${o.desc}" />
+<meta name="author" content="${AUTHOR_NAME}" />
 <link rel="preload" href="/public/fonts/DungGeunMo.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="/public/home-classic.css?v=39" as="style" />
+<link rel="preload" href="/public/home-classic.css?v=41" as="style" />
 <link rel="canonical" href="${canonical}" />
 <meta name="naver-site-verification" content="b772d55249f687c4f016c2b33cbcde1f1006d12a" />
 <meta name="google-site-verification" content="Eoit82zDj0gOaGtXaJUpWtksxNxgAglIlg0ijwA_-1g" />
@@ -622,7 +635,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
   const topt = top.length ? top[0] : null;
   const toptP = topt ? getPost(topt.slug) : null;
 
-  return html`<link rel="stylesheet" href="/public/home-classic.css?v=29" />
+  return html`<link rel="stylesheet" href="/public/home-classic.css?v=41" />
 <div class="crt-roll"></div>
 <div class="page" id="top">
 
@@ -765,7 +778,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
 
 function chatBox(lang: Lang) {
   return html`
-      <div class="box box-chat" id="chat">
+      <div class="box box-chat" id="chat" role="complementary" aria-label="live chat" data-boilerplate="chat">
         <div class="box-title"><img class="ico" src="/public/icons/message_envelope_open-0.png" alt=""> ${co(lang, 'chatTitle')}</div>
         <div class="box-body">
           <div id="chat-log" class="chat-log" aria-live="polite"></div>
@@ -835,7 +848,7 @@ function classicSide(lang: Lang) {
 function classicShell(lang: Lang, mainContent: any, headExtra: any) {
   const desc = lang === 'ko' ? SITE_DESC : SITE_DESC_EN;
   const other = lang === 'ko' ? 'en' : 'ko';
-  return html`<link rel="stylesheet" href="/public/home-classic.css?v=29" />
+  return html`<link rel="stylesheet" href="/public/home-classic.css?v=41" />
 <div class="page" id="top">
   <div class="banner slim">
     <div class="lang-flags">
@@ -850,7 +863,7 @@ function classicShell(lang: Lang, mainContent: any, headExtra: any) {
   ${liveStrip(lang)}
   <table class="layout"><tr>
     <td class="side">${classicSide(lang)}</td>
-    <td class="main">${mainContent}</td>
+    <td class="main"><main id="main">${mainContent}</main></td>
   </tr></table>
   <div class="rainbow"></div>
   <div class="footer">
@@ -977,15 +990,21 @@ async function renderPost(c: any, lang: Lang, slug: string) {
   const url = `${SITE_URL}${postPath(lang, slug)}`;
   const thumb = p.og || firstImage(p);
   const iso = lastmod(p);
-  const jsonld = [{ '@context': 'https://schema.org', '@type': 'BlogPosting',
+  const prov = p.provenance?.[lang] || '';
+  const jsonldPost: any = { '@context': 'https://schema.org', '@type': 'BlogPosting',
     headline: p.title[lang], description: p.description[lang],
     datePublished: p.date, dateModified: iso,
     inLanguage: lang, url, mainEntityOfPage: url,
     image: thumb || `${SITE_URL}/public/og.png`,
     author: { '@type': 'Person', name: AUTHOR_NAME, url: SITE_URL },
     publisher: { '@type': 'Person', name: AUTHOR_NAME, url: SITE_URL },
-    publisher: { '@type': 'Person', name: AUTHOR_NAME },
-  }, { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  };
+  if (prov) {
+    jsonldPost.contributor = { '@type': 'SoftwareApplication', name: 'Hermes Agent (LLM draft + subagent cross-check)' };
+    jsonldPost.editor = { '@type': 'Person', name: AUTHOR_NAME, url: SITE_URL };
+  }
+  const jsonld = [jsonldPost,
+    { '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: SITE_NAME, item: `${SITE_URL}${homePath(lang)}` },
       { '@type': 'ListItem', position: 2, name: p.title[lang], item: url },
@@ -1038,13 +1057,14 @@ async function renderPost(c: any, lang: Lang, slug: string) {
   </div>`;
   const ko = lang === 'ko';
   const inner = html`
-      <div class="box">
+      <article class="box">
         <div class="box-title post-titlebar"><img class="ico" src="/public/icons/notepad-2.png" alt=""> <span class="pt-left">${p.date} · ${tagsOf(p).join(' · ')} ${idx === 0 ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}</span><span class="post-meta-r"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewCount} · ${lang === 'ko' ? `약 ${mins}분 분량` : `${mins} min read`}</span></div>
         <div class="box-body post-body">
           <h1 class="post-h1">${p.title[lang]}</h1>
+          ${prov ? html`<div class="prov-note" data-provenance="ai-assisted"><img class="ico" src="/public/icons/msg_information-0.png" alt=""> ${prov}</div>` : ''}
           ${html([md2html(p.body[lang])] as any)}
         </div>
-      </div>
+      </article>
       <div class="box">
         <div class="box-title"><img class="ico" src="/public/icons/search_file_2-4.png" alt=""> ${co(lang, 'navTitle')}</div>
         <div class="box-body">
