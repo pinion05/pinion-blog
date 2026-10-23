@@ -39,7 +39,9 @@
       var h = document.getElementById('live-here');
       if (h) {
         if (location.pathname === '/' || j.here == null) { h.textContent = ''; }
-        else { h.textContent = j.here + (en ? ' viewing the same page' : '\uba85\uc774 \ub098\uc640 \uac19\uc740 \ud398\uc774\uc9c0\ub97c \ubcf4\ub294\uc911'); }
+        var others = (j.here || 0) - 1; // 자기 자신 제외 — 0이면 표시 안 함
+        if (others > 0) h.textContent = others + (en ? ' viewing the same page' : '\uba85\uc774 \ub098\uc640 \uac19\uc740 \ud398\uc774\uc9c0\ub97c \ubcf4\ub294\uc911');
+        else h.textContent = '';
       }
     } catch (e) {}
   }

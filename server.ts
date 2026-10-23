@@ -284,7 +284,7 @@ ${hreflang}
 }
 
 const umami = html`<script defer src="/script.js" data-website-id="${UMAMI_ID}"></script>`;
-const deviceId = html`<script defer src="/public/device-id.js?v=5"></script>`;
+const deviceId = html`<script defer src="/public/device-id.js?v=6"></script>`;
 
 // 어드민 전용 레이아웃
 function adminLayout(title: string, content: any, extraHead = '') {
