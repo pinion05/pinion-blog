@@ -344,7 +344,7 @@ function head(lang: Lang, o: { title: string; desc: string; path: string; type?:
 <meta name="description" content="${o.desc}" />
 <meta name="author" content="${AUTHOR_NAME}" />
 <link rel="preload" href="/public/fonts/DungGeunMo.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="/public/home-classic.css?v=42" as="style" />
+<link rel="preload" href="/public/home-classic.css?v=43" as="style" />
 <link rel="canonical" href="${canonical}" />
 <meta name="naver-site-verification" content="b772d55249f687c4f016c2b33cbcde1f1006d12a" />
 <meta name="google-site-verification" content="Eoit82zDj0gOaGtXaJUpWtksxNxgAglIlg0ijwA_-1g" />
@@ -635,7 +635,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
   const topt = top.length ? top[0] : null;
   const toptP = topt ? getPost(topt.slug) : null;
 
-  return html`<link rel="stylesheet" href="/public/home-classic.css?v=42" />
+  return html`<link rel="stylesheet" href="/public/home-classic.css?v=43" />
 <div class="crt-roll"></div>
 <div class="page" id="top">
 
@@ -852,7 +852,7 @@ function classicSide(lang: Lang) {
 function classicShell(lang: Lang, mainContent: any, headExtra: any) {
   const desc = lang === 'ko' ? SITE_DESC : SITE_DESC_EN;
   const other = lang === 'ko' ? 'en' : 'ko';
-  return html`<link rel="stylesheet" href="/public/home-classic.css?v=42" />
+  return html`<link rel="stylesheet" href="/public/home-classic.css?v=43" />
 <div class="page" id="top">
   <div class="banner slim">
     <div class="lang-flags">

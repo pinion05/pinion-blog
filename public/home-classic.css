@@ -82,6 +82,7 @@ a { color: #0000EE; text-decoration: underline; }
 .home-classic /* ── 2단 테이블 레이아웃 ──────────────────────────── */
 table.layout { width: 100%; margin-top: 10px; table-layout: fixed; border: 0; border-spacing: 0; direction: rtl; }
 table.layout td { direction: ltr; }
+.home-classic main { padding-top: 0; }  /* 구 style.css의 main{padding-top:2rem} 리셋 */
 .home-classic td.side { width: 190px; padding: 0 10px 0 0; vertical-align: top; }
 .home-classic td.main { vertical-align: top; }
 .home-classic /* ── 박스 ─────────────────────────────────────────── */
