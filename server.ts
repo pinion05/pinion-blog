@@ -20,26 +20,35 @@ const UMAMI_ID = '9f85d767-429a-40bb-b5d9-b372bbd3bdeb';
 const INDEXNOW_KEY = (() => { try { return readFileSync(new URL('./.indexnow-key', import.meta.url), 'utf8').trim(); } catch { return process.env.INDEXNOW_KEY || ''; } })();
 const GIPHY_KEY = (() => { try { return readFileSync(new URL('./.giphy-key', import.meta.url), 'utf8').trim(); } catch { return ''; } })();
 const ADSENSE_CLIENT = (() => { try { return readFileSync(new URL('./.adsense-client', import.meta.url), 'utf8').trim(); } catch { return ''; } })();
-const OPENROUTER_KEY = (() => {
-  try {
-    const m = readFileSync('/home/pinion/.hermes/.env', 'utf8').match(/^OPENROUTER_API_KEY=(.+)$/m);
-    return m ? m[1].trim() : '';
-  } catch { return ''; }
+const FREEAPI_KEY = (() => {
+  try { return readFileSync('/home/pinion/freellmapi/UNIFIED_API_KEY.txt', 'utf8').trim(); } catch { return ''; }
 })();
 function backgroundSave(job: () => Promise<void>) {
   job().catch((e) => console.error('background save failed:', e));
 }
 async function translateToEn(text: string): Promise<string> {
-  if (!OPENROUTER_KEY || !text.trim()) return '';
+  if (!FREEAPI_KEY || !text.trim()) return '';
   try {
-    const r = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    // freellmapi 로컬 라우터 — 모델 'auto' + 라우팅 전략 'balanced' (128K 컨텍스트 풀)
+    // HTML 블록(style/mermaid/script/div/iframe/table)은 번역하지 않고 플레이스홀더로 치환 후 원문 복원 —
+    // 모델이 태그·src를 임의로 바꾸는 것을 방지
+    const blocks: string[] = [];
+    const MARK = '%%BLOGHTMLBLOCK';
+    let md = text.replace(/<(style|pre|script|iframe|table)\b[^>]*>[\s\S]*?<\/\1>|<div\b[^>]*>[\s\S]*?<\/div>/gi, (m0) => {
+      blocks.push(m0);
+      return `\n\n${MARK}${blocks.length}%%\n\n`;
+    });
+    const r = await fetch('http://127.0.0.1:3001/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${OPENROUTER_KEY}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${FREEAPI_KEY}`, 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(300_000), // smartest 라우팅은 프론티어 모델을 고를 수 있어 여유 있게
       body: JSON.stringify({
-        model: 'anthropic/claude-haiku-5.5',
+        // 실측: smartest 라우팅 pick(dots-3-note-preview:free)은 placeholder 보존 실패 → 무결성 검증에서 KO fallback.
+        // 번역은 검증된 모델 고정 (전역 라우팅 전략과 무관하게 안정 동작)
+        model: 'gemini-3.5-flash',
         messages: [
-          { role: 'system', content: 'Translate Korean to natural English. Keep markdown formatting exactly (## headings, - lists, [links](url), ![alt](url), code fences). Output only the translation, nothing else.' },
-          { role: 'user', content: text },
+          { role: 'system', content: 'Translate Korean to natural English. Keep markdown formatting exactly (## headings, - lists, [links](url), ![alt](url), code fences). Lines like %%BLOGHTMLBLOCK1%% are placeholders — keep them unchanged, never translate or remove them. Output only the translation, nothing else.' },
+          { role: 'user', content: md },
         ],
       }),
     });
@@ -48,6 +57,49 @@ async function translateToEn(text: string): Promise<string> {
     let out: string = j.choices?.[0]?.message?.content?.trim() || '';
     const thinkEnd = out.lastIndexOf('</think>');
     if (thinkEnd !== -1) out = out.slice(thinkEnd + 8).trim();
+    out = out.replace(new RegExp(`${MARK}(\\d+)%%`, 'g'), (_, i) => blocks[Number(i) - 1] ?? '');
+    if (out.includes(MARK)) return '';
+    // div 블록 안의 한글 텍스트 노드만 2차 번역 (HTML 구조·태그는 그대로 유지)
+    const hangul = (s: string) => /[\uAC00-\uD7A3]/.test(s);
+    for (const b0 of blocks) {
+      if (!/^<div/i.test(b0) || !hangul(b0)) continue;
+      const b = b0.replace(/\s+/g, ' ');      // 텍스트 노드 내 개행 정규화 (렌더 동일)
+      out = out.split(b0).join(b);
+      const segs = (b.match(/>[^<]*[\uAC00-\uD7A3][^<]*</g) || []).map(s => s.slice(1, -1).replace(/\s+/g, ' ').trim());
+      if (!segs.length) continue;
+      try {
+        const numbered = segs.map((s, i) => `[[${i + 1}]] ${s}`).join('\n');
+        const r2 = await fetch('http://127.0.0.1:3001/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${FREEAPI_KEY}`, 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(120_000),
+          body: JSON.stringify({
+            model: 'gemini-3.5-flash',
+            messages: [
+              { role: 'system', content: 'Each line starts with an [[N]] marker. Translate the text after each marker from Korean to natural English. Output every marker with its translation on its own line, same order, same numbering. Output nothing else.' },
+              { role: 'user', content: numbered },
+            ],
+          }),
+        });
+        if (!r2.ok) continue;
+        const j2: any = await r2.json();
+        let t2: string = j2.choices?.[0]?.message?.content?.trim() || '';
+        const te2 = t2.lastIndexOf('</think>');
+        if (te2 !== -1) t2 = t2.slice(te2 + 8).trim();
+        const byNum = new Map<number, string>();
+        for (const m2 of t2.matchAll(/\[\[(\d+)\]\]\s*([\s\S]*?)(?=\n\[\[\d+\]\]|$)/g)) {
+          const n = Number(m2[1]);
+          if (n >= 1 && n <= segs.length && m2[2].trim()) byNum.set(n, m2[2].trim());
+        }
+        if (!byNum.size) continue;
+        let nb = b;
+        for (let si = 0; si < segs.length; si++) {
+          const tr = byNum.get(si + 1);
+          if (tr) nb = nb.split(segs[si]).join(tr);
+        }
+        out = out.split(b).join(nb);
+      } catch { /* 2차 번역 실패 시 원문 유지 */ }
+    }
     return out;
   } catch { return ''; }
 }
