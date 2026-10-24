@@ -1246,8 +1246,22 @@ app.get('/en/stats', (c) => renderStats(c, 'en'));
 
 app.get('/guestbook', (c) => renderGuestbook(c, 'ko'));
 app.get('/en/guestbook', (c) => renderGuestbook(c, 'en'));
-app.get('/post/:slug', async (c) => renderPost(c, 'ko', c.req.param('slug')));
-app.get('/en/post/:slug', async (c) => renderPost(c, 'en', c.req.param('slug')));
+// 301 redirects — renamed study-note slugs (2026-10-24)
+const renamedSlugs: Record<string, string> = {
+  'dl-midterm-review': 'deep-learning-fundamentals',
+  'hci-midterm-review': 'hci-3.0-core-concepts',
+  'bp-midterm-review': 'startup-planning-notes',
+};
+app.get('/post/:slug', (c) => {
+  const to = renamedSlugs[c.req.param('slug')];
+  if (to) return c.redirect(`/post/${to}`, 301);
+  return renderPost(c, 'ko', c.req.param('slug'));
+});
+app.get('/en/post/:slug', (c) => {
+  const to = renamedSlugs[c.req.param('slug')];
+  if (to) return c.redirect(`/en/post/${to}`, 301);
+  return renderPost(c, 'en', c.req.param('slug'));
+});
 
 // 댓글 등록
 app.post('/api/comments', async (c) => {
