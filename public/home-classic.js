@@ -42,8 +42,8 @@
     var total = posts.length;
     if (!list.length) {
       body.innerHTML = lang === 'en'
-        ? '<tr><td colspan="3" style="text-align:center;padding:14px 0;color:#555;">No results.</td></tr>'
-        : '<tr><td colspan="3" style="text-align:center;padding:14px 0;color:#555;">검색 결과가 없습니다.</td></tr>';
+        ? '<tr><td colspan="2" style="text-align:center;padding:14px 0;color:#555;">No results.</td></tr>'
+        : '<tr><td colspan="2" style="text-align:center;padding:14px 0;color:#555;">검색 결과가 없습니다.</td></tr>';
     } else {
       body.innerHTML = list.map(function (p, i) {
         var title = lang === 'en' ? (p.titleEn || p.title) : p.title;
@@ -53,15 +53,15 @@
         var titleHtml = '<a href="/' + (lang === 'en' ? 'en/post/' : 'post/') + p.slug + '">' + esc(title) + '</a>'
           + (i === 0 && !state.tags.length && !state.hits ? '<span class="new">NEW!</span>' : '');
         if (mobile) {
-          return '<tr class="m-row"><td colspan="3">'
+          return '<tr class="m-row"><td colspan="2">'
             + '<div class="m-meta">' + chips + '</div>'
             + '<div class="m-titleline">' + titleHtml + '</div>'
             + '<div class="desc">' + esc(desc) + ' <span class="c-date">' + p.date + '</span></div>'
             + '</td></tr>';
         }
         return '<tr>'
-          + '<td>' + titleHtml + '<div class="desc">' + esc(desc) + ' <span class="c-date">' + p.date + '</span></div></td>'
-          + '<td class="c-cat">' + chips + '</td>'
+          + '<td>' + titleHtml + '<div class="desc">' + esc(desc) + ' <span class="c-date">' + p.date + '</span></div>'
+          + '<span class="t-tags">' + chips + '</span></td>'
           + '<td class="views">' + eye + v + '</td>'
           + '</tr>';
       }).join('');

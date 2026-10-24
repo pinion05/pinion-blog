@@ -530,6 +530,8 @@ body.home-classic.m .board-titlebar .bsearch input[type="text"] { flex: 1; width
 
 /* ── 태그 칩 줄바꿈 (칸 넘침 방지) ── */
 .home-classic table.posts td.c-cat .tagwrap { display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-start; }
+.home-classic .t-tags { display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-start; margin-top: 4px; }
+.home-classic .t-tags .tagwrap { display: flex; flex-wrap: wrap; gap: 3px; align-items: flex-start; max-width: 100%; }
 body.home-classic.m .m-meta .tagwrap { display: inline-flex; flex-wrap: wrap; gap: 3px; max-width: 100%; }
 
 /* ── 포스트 타이틀바: 조회수 + 읽는 시간 ── */

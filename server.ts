@@ -376,7 +376,7 @@ function head(lang: Lang, o: { title: string; desc: string; path: string; type?:
 <meta name="description" content="${o.desc}" />
 <meta name="author" content="${AUTHOR_NAME}" />
 <link rel="preload" href="/public/fonts/DungGeunMo.woff2" as="font" type="font/woff2" crossorigin />
-<link rel="preload" href="/public/home-classic.css?v=43" as="style" />
+<link rel="preload" href="/public/home-classic.css?v=44" as="style" />
 <link rel="canonical" href="${canonical}" />
 <meta name="naver-site-verification" content="b772d55249f687c4f016c2b33cbcde1f1006d12a" />
 <meta name="google-site-verification" content="Eoit82zDj0gOaGtXaJUpWtksxNxgAglIlg0ijwA_-1g" />
@@ -667,7 +667,7 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
   const topt = top.length ? top[0] : null;
   const toptP = topt ? getPost(topt.slug) : null;
 
-  return html`<link rel="stylesheet" href="/public/home-classic.css?v=43" />
+  return html`<link rel="stylesheet" href="/public/home-classic.css?v=44" />
 <div class="crt-roll"></div>
 <div class="page" id="top">
 
@@ -700,8 +700,8 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
         </div>
         <div class="box-body pad6">
           <table class="posts">
-            <tr><th>${t.title}</th><th class="c-cat">${t.cat}</th><th class="c-views">${t.views}</th></tr>
-            <tbody id="board-body">${shown.map((p, i) => mobile ? html`<tr class="m-row"><td colspan="3">
+            <tr><th>${t.title}</th><th class="c-views">${t.views}</th></tr>
+            <tbody id="board-body">${shown.map((p, i) => mobile ? html`<tr class="m-row"><td colspan="2">
               <div class="m-meta"><span class="tagwrap">${tagsOf(p).map((tg: string) => html`<span class="catl">${tg}</span>`)}</span><span class="views"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewsBySlug.get(p.slug) || 0}</span></div>
               <div class="m-titleline"><a href="${postPath(lang, p.slug)}">${p.title[lang]}</a>${i === 0 && !initTags.length ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}</div>
               <div class="desc">${p.description[lang]} <span class="c-date">${p.date}</span></div>
@@ -709,8 +709,8 @@ function classicHomeBody(c: any, lang: Lang, mobile: boolean, top: { slug: strin
               <td>
                 <a href="${postPath(lang, p.slug)}">${p.title[lang]}</a>${i === 0 && !initTags.length ? html`<span class="new">${co(lang, 'newBadge')}</span>` : ''}
                 <div class="desc">${p.description[lang]} <span class="c-date">${p.date}</span></div>
+                <span class="t-tags"><span class="tagwrap">${tagsOf(p).map((tg: string) => html`<span class="catl">${tg}</span>`)}</span></span>
               </td>
-              <td class="c-cat"><span class="tagwrap">${tagsOf(p).map((tg: string) => html`<span class="catl">${tg}</span>`)}</span></td>
               <td class="views"><img class="ico" src="/public/icons/file_eye.png" alt=""> ${viewsBySlug.get(p.slug) || 0}</td>
             </tr>`)}</tbody>
           </table>
@@ -883,7 +883,7 @@ function classicSide(lang: Lang) {
 function classicShell(lang: Lang, mainContent: any, headExtra: any) {
   const desc = lang === 'ko' ? SITE_DESC : SITE_DESC_EN;
   const other = lang === 'ko' ? 'en' : 'ko';
-  return html`<link rel="stylesheet" href="/public/home-classic.css?v=43" />
+  return html`<link rel="stylesheet" href="/public/home-classic.css?v=44" />
 <div class="page" id="top">
   <div class="banner slim">
     <div class="lang-flags">
@@ -989,7 +989,7 @@ ${html([head(lang, {
 ${classicHomeBody(c, lang, mobile, top)}
 <script type="application/json" id="posts-data">${raw(postsDataJson())}</script>
 <script type="application/json" id="views-data">${raw(JSON.stringify(viewsBySlug))}</script>
-<script src="/public/home-classic.js?v=7" defer></script>
+<script src="/public/home-classic.js?v=8" defer></script>
 <script src="/public/chat.js?v=7" defer></script>
 ${umami}${deviceId}
 </body>
